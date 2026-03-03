@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-# define MAIN_H
+#ifndef MAIN_HPP
+# define MAIN_HPP
 
 # include <iostream>
 # include <string>
@@ -44,7 +44,7 @@ template<typename T> void log_warning(const std::string & str, const T & input) 
 }
 
 template<typename T> void	log_error(const T & message) {
-	std::cout << RED << "[ERROR] " << message << std::endl;
+	std::cerr << RED << "[ERROR] " << message << std::endl;
 }
 
 template<typename T> void	log_debug(const std::string & message, const T & variable) {

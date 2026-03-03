@@ -5,6 +5,8 @@
 # include <set>
 # include <string>
 
+# include "main.hpp"
+
 struct rewriteConfig {
 	std::string pattern;
 	std::string replacement;
@@ -46,6 +48,25 @@ struct serverConfig {
 	std::set<locationConfig> locations;
 
 	bool operator<(const serverConfig& other) const;
+};
+
+// config class from the configuration file
+
+class config {
+	private:
+		config(void);
+
+	public:
+		config(const config & other);
+		config & operator=(const config & other);
+		~config(void);
+
+		config(const std::string &config_file);
+		std::set<serverConfig> parseConfFile(void) const;
+
+	private:
+		std::string _config_file;
+		char _buffer[BUFFER_SIZE];
 };
 
 # endif

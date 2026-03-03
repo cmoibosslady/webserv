@@ -20,9 +20,13 @@ DEP_DIR = deps
 HEADER_DIR = include
 
 
-SRCS = main.cpp 
+SRCS = main.cpp \
+	   tokeniser.cpp \
+	   config.hpp
 
-HEADER =  main.hpp
+HEADER =  main.hpp \
+		  tokeniser.hpp \
+		  config.hpp
 			
 
 OBJS = $(SRCS:%.cpp=${OBJ_DIR}/%.o)
