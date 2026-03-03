@@ -6,7 +6,7 @@ CC = c++
 
 CFLAGS = -Wall -Wextra -Werror -MMD -MP -std=c++98 -g
 
-NAME = weebserv
+NAME = webserv
 
 
 SRC_DIR = srcs
@@ -20,20 +20,9 @@ DEP_DIR = deps
 HEADER_DIR = include
 
 
-SRCS = TCPServer.cpp \
-	   Request.cpp \
-	   parsingConf.cpp \
-	   tokeniser.cpp \
-	   utils.cpp \
-	   main.cpp
+SRCS = main.cpp 
 
-HEADER = TCPServer.hpp \
-		 Request.hpp \
-		 parsingConf.hpp \
-		 tokeniser.hpp \
-		 configuration.hpp \
-		 utils.hpp \
-		 main.hpp
+HEADER =  main.hpp
 			
 
 OBJS = $(SRCS:%.cpp=${OBJ_DIR}/%.o)
