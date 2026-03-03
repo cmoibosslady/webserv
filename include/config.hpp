@@ -62,7 +62,8 @@ class config {
 		~config(void);
 
 		config(const std::string &config_file);
-		std::set<serverConfig> parseConfFile(void) const;
+		int						openFile(void) const;
+		std::set<serverConfig>	parseConfFile(void) const;
 
 	private:
 		std::string _config_file;
