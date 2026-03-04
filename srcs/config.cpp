@@ -2,6 +2,7 @@
 #include "main.hpp"
 #include "tokeniser.hpp"
 
+#include <sys/stat.h>
 #include <unistd.h>
 
 // Canonical form + constructor with filename
@@ -29,5 +30,28 @@ config::config(const std::string & filename) {
 }
 
 // methods to parse config file
+int config::parseConfFile(std::set<serverConfig> & servers) const {
+	if (checkFile(config_file.c_str()))
+		return -1;
+	return 0;
+}
 
-std::set<serverConfig> parseConfFile(void) const;
+int	config::checkFile(const char *__restrict__ file_path) const {
+	if (access(file_path, F_OK | R_OK)) {
+		log_error<std::string>("config file cannot be open");
+		log_error<std::string>(strerror(errno));
+		return -1;
+	}
+	struct stat st;
+	if (stat(file_path,  &st) == -1) {
+		log_error<std::string>("config file cannot be stat");
+		log_error<std::string>(strerror(errno));
+		return -1;
+	}
+	if (access(file_path, R_OK) == -1) {
+		log_error<std::string>("config file cannot be read");
+		log_error<std::string>(strerror(errno));
+		return -1;
+	}
+	return 0;
+}

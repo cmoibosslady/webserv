@@ -58,16 +58,21 @@ class config {
 
 	public:
 		config(const config & other);
-		config & operator=(const config & other);
+		config&	operator=(const config & other);
 		~config(void);
-
+		
 		config(const std::string &config_file);
-		int						openFile(void) const;
-		std::set<serverConfig>	parseConfFile(void) const;
+
+		int 	parseConfFile(std::set<serverConfig> &) const;
+
+	private:
+		int		checkFile(const char *__restrict__ file_path) const;
 
 	private:
 		std::string _config_file;
-		char _buffer[BUFFER_SIZE];
+		char 		_buffer[BUFFER_SIZE];
+
+
 };
 
 # endif
