@@ -10,7 +10,7 @@ enum config_file_token {
 	TOKEN_LBRACE,
 	TOKEN_RBRACE,
 	TOKEN_COMMENT,
-	TOKEN_EOF
+	TOKEN_END
 };
 
 struct conf_token {

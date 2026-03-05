@@ -50,7 +50,7 @@ conf_token	Tokeniser::getNextToken(void) {
 		this->_pos++;
 	// eof
 	if (_pos >= _input.length())
-		return (token.type = TOKEN_EOF, token);
+		return (token.type = TOKEN_END, token);
 
 	char currentChar = _input[_pos];
 	if (currentChar == '{') {

@@ -50,8 +50,9 @@ struct serverConfig {
 	bool operator<(const serverConfig& other) const;
 };
 
-// config class from the configuration file
+class Tokeniser;
 
+// config class from the configuration file
 class config {
 	private:
 		config(void);
@@ -68,11 +69,26 @@ class config {
 	private:
 		int		checkFile(const char *__restrict__ file_path) const;
 
+		int 	parseServerBloc(std::ifstream &ifs, serverConfig &server) const;
+		int		addPort(Tokeniser &tokeniser, serverConfig &server) const;
+		int 	addErrorPage(Tokeniser &tokeniser, serverConfig &server) const;
+		int 	addClientMaxBodySize(Tokeniser &tokeniser, serverConfig &server) const;
+
+		int 	parseLocationBloc(std::ifstream &ifs, locationConfig &location) const;
+		int 	addAllowedMethods(Tokeniser &tokeniser, locationConfig &location) const;
+		int 	addRoot(Tokeniser &tokeniser, locationConfig &location) const;
+		int 	addAutoindex(Tokeniser &tokeniser, locationConfig &location) const;
+		int		addIndex(Tokeniser &tokeniser, locationConfig &location) const;
+		int 	addUploadAuth(Tokeniser &tokeniser, locationConfig &location) const;
+		int 	addUploadPath(Tokeniser &tokeniser, locationConfig &location) const;
+		int 	addRewrite(Tokeniser &tokeniser, locationConfig &location) const;
+		int 	addCgi(Tokeniser &tokeniser, locationConfig &location) const;
+
+		int		checkServer(Tokeniser &tokeniser, serverConfig &server) const;
+		int		checkLocation(Tokeniser &tokeniser, locationConfig &location) const;
+
 	private:
 		std::string _config_file;
-		char 		_buffer[BUFFER_SIZE];
-
-
 };
 
 # endif
