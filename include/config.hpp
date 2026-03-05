@@ -35,7 +35,8 @@ struct locationConfig {
 
 	std::set<rewriteConfig> rewrites;
 	std::set<cgiConfig> cgi_configs;
-
+	
+	locationConfig() : autoindex(false), upload_auth(false) {}
 	bool operator<(const locationConfig& other) const;
 };
 
@@ -47,6 +48,7 @@ struct serverConfig {
 
 	std::set<locationConfig> locations;
 
+	serverConfig() : port(0), client_max_body_size(std::numeric_limits<size_t>::max()) {}
 	bool operator<(const serverConfig& other) const;
 };
 

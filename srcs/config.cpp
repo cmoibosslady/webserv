@@ -1,10 +1,9 @@
-#include "config.hpp"
-#include "main.hpp"
-#include "tokeniser.hpp"
-
 #include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "config.hpp"
+#include "main.hpp"
+#include "tokeniser.hpp"
 
 // Canonical form + constructor with filename
 config::config(void) {

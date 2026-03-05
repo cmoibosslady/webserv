@@ -21,12 +21,17 @@ HEADER_DIR = include
 
 
 SRCS = main.cpp \
-	   tokeniser.cpp \
-	   config.hpp
+	   add_to_config.cpp \
+	   config.hpp \
+	   ft_mem.hpp \
+	   stoul.hpp \
+	   tokeniser.cpp 
 
 HEADER =  main.hpp \
-		  tokeniser.hpp \
-		  config.hpp
+		  config.hpp \
+		  ft_mem.hpp \
+		  stoul.hpp \
+		  tokeniser.hpp
 			
 
 OBJS = $(SRCS:%.cpp=${OBJ_DIR}/%.o)
