@@ -22,9 +22,10 @@ HEADER_DIR = include
 
 SRCS = main.cpp \
 	   add_to_config.cpp \
-	   config.hpp \
-	   ft_mem.hpp \
-	   stoul.hpp \
+	   config.cpp \
+	   ft_mem.cpp \
+	   overload_config.cpp \
+	   stoul.cpp \
 	   tokeniser.cpp 
 
 HEADER =  main.hpp \

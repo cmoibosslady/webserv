@@ -35,7 +35,7 @@ class Tokeniser {
 	private:
 		std::string _input;
 		size_t 		_pos;
-		size_t		_line_number;
+		static size_t		_line_number;
 };
 
 #endif

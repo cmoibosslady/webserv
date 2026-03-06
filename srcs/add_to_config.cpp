@@ -5,7 +5,7 @@
 
 static int	consumeSemicolon(Tokeniser &tokeniser) {
 	if (tokeniser.getNextToken().type != TOKEN_SEMICOLON) {
-		log_error<std::string>("Expected ';' at the end of directive" + tokeniser.getLineContext());
+		log_error<std::string>("Expected ';' at the end of directive. " + tokeniser.getLineContext());
 		return -1;
 	}
 	return 0;
@@ -123,13 +123,20 @@ int	config::addRewrite(Tokeniser &tokeniser, locationConfig &location) const {
 		log_error<std::string>("Expected a rewrite rule, got: " + token.value + tokeniser.getLineContext());
 		return -1;
 	}
-	if (token.value.substr(0, 1) != "^/" || token.value[token.value.size() - 1] != '$') {
+	if (token.value.substr(0, 2) != "^/" || token.value[token.value.size() - 1] != '$') {
 		log_error<std::string>("Rewrite rule must be ^/<path>$ " + tokeniser.getLineContext());
 		return -1;
 	}
 	struct rewriteConfig rule;
 	rule.pattern = token.value.substr(2, token.value.size() - 1);
 	rule.replacement = tokeniser.getNextToken().value;
+	token = tokeniser.getNextToken();
+	if (token.value == "redirect")
+		rule.error_code = 303;
+	else if (token.value == "permanent")
+		rule.error_code = 301;
+	else
+		rule.error_code = 0; // Internal rewrite
 	location.rewrites.insert(rule);
 	return consumeSemicolon(tokeniser);
 }
@@ -160,5 +167,6 @@ int	config::addCgi(Tokeniser &tokeniser, locationConfig &location) const {
 	cgi.script_path = script_path;
 	cgi.allowed_methods = methods;
 	location.cgi_configs.insert(cgi);
+	log_debug<std::string>("Added CGI config: extension=" + extension,", script=" + script_path);
 	return consumeSemicolon(tokeniser);
 }

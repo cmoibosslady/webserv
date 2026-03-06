@@ -11,7 +11,6 @@ int	main(int argc, char **argv)
 	config config_setup(argv[1]);
 	std::set<serverConfig> servers;
 	if (config_setup.parseConfFile(servers) == -1) {
-		log_error<std::string>("Failed to open config file: " + std::string(argv[1]));
 		return 1;
 	}
 }

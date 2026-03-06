@@ -17,7 +17,7 @@ struct rewriteConfig {
 
 struct cgiConfig {
 	std::string extension;
-	std::string executable_path;
+	std::string script_path;
 
 	std::set<std::string> allowed_methods; // by default, all methods are allowed
 	bool operator<(const cgiConfig& other) const;
@@ -70,8 +70,8 @@ class config {
 		int 	parseConfFile(std::set<serverConfig> &) const;
 
 	private:
-		int		checkFile(const char *__restrict__ file_path) const;
-		int		checkDirectory(const char *__restrict__ dir_path) const;
+		int		checkFile(const char *__restrict__ file_path, int mode) const;
+		int		checkDirectory(const char *__restrict__ dir_path, int mode) const;
 
 		int 	parseServerBloc(std::ifstream &ifs, serverConfig &server) const;
 		int		addPort(Tokeniser &tokeniser, serverConfig &server) const;
@@ -88,11 +88,13 @@ class config {
 		int 	addRewrite(Tokeniser &tokeniser, locationConfig &location) const;
 		int 	addCgi(Tokeniser &tokeniser, locationConfig &location) const;
 
-		int		checkServer(Tokeniser &tokeniser, serverConfig &server) const;
-		int		checkLocation(Tokeniser &tokeniser, locationConfig &location) const;
+		int		checkServer(const std::set<serverConfig> &servers) const;
+		int		checkLocation(const locationConfig &location) const;
 
-		int		checkRoot(locationConfig &location) const;
-		int		checkIndexFiles(locationConfig &location) const;
+		int		checkRoot(std::set<locationConfig>::const_iterator location) const;
+		int		checkIndexFiles(std::set<locationConfig>::const_iterator location) const;
+		int		checkUploadPath(std::set<locationConfig>::const_iterator location) const;
+		int		checkCgiConfig(std::set<locationConfig>::const_iterator location) const;
 	private:
 		std::string _config_file;
 };

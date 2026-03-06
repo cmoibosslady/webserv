@@ -31,7 +31,7 @@ config::config(const std::string & filename) {
 
 // methods to parse config file
 int config::parseConfFile(std::set<serverConfig> & servers) const {
-	if (checkFile(_config_file.c_str()) == -1)
+	if (checkFile(_config_file.c_str(), F_OK | R_OK) == -1)
 		return -1;
 	std::ifstream file(_config_file.c_str());
 	if (!file.is_open()) {
@@ -50,6 +50,7 @@ int config::parseConfFile(std::set<serverConfig> & servers) const {
 			return -1;
 		}
 		if (token.value == "server" && tokeniser.getNextToken().type == TOKEN_LBRACE) {
+			log_info<std::string>("Parsing server block...");
 			serverConfig server;
 			if (parseServerBloc(file, server) == -1)
 				return -1;
@@ -60,11 +61,13 @@ int config::parseConfFile(std::set<serverConfig> & servers) const {
 			return -1;
 		}
 	}
+	if (checkServer(servers) == -1)
+		return -1;
 	return 0;
 }
 
-int	config::checkFile(const char *__restrict__ file_path) const {
-	if (access(file_path, F_OK | R_OK) == -1) {
+int	config::checkFile(const char *__restrict__ file_path, int mode) const {
+	if (access(file_path, mode) == -1) {
 		log_error<std::string>(strerror(errno));
 		return -1;
 	}
@@ -85,8 +88,8 @@ int	config::checkFile(const char *__restrict__ file_path) const {
 	return 0;
 }
 
-int	config::checkDirectory(const char *__restrict__ dir_path) const {
-	if (access(dir_path, F_OK | R_OK | X_OK) == -1) {
+int	config::checkDirectory(const char *__restrict__ dir_path, int mode) const {
+	if (access(dir_path, mode) == -1) {
 		log_error<std::string>(strerror(errno));
 		return -1;
 	}
@@ -128,6 +131,7 @@ int config::parseServerBloc(std::ifstream &ifs, serverConfig &server) const {
 				return -1;
 		}
 		else if (token.value == "location") {
+			log_info<std::string>("Parsing location block...");
 			locationConfig location;
 			if (tokeniser.peek().type != TOKEN_WORD) {
 				log_error<std::string>("Expected path after location keyword" + tokeniser.getLineContext());
@@ -155,6 +159,8 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 	while (std::getline(ifs, line)) {
 		tokeniser.setInput(line);
 		conf_token token = tokeniser.getNextToken();
+		if (token.type == TOKEN_RBRACE)
+			return 0; // End of location block
 		if (token.type == TOKEN_COMMENT || token.type == TOKEN_END)
 			continue;
 		if (token.type != TOKEN_WORD && token.type != TOKEN_RBRACE) {
@@ -173,8 +179,16 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 			if (addAutoindex(tokeniser, location) == -1)
 				return -1;
 		}
-		else if (token.value == "allowed_methods") {
+		else if (token.value == "allow_methods") {
 			if (addAllowedMethods(tokeniser, location) == -1)
+				return -1;
+		}
+		else if (token.value == "upload_auth") {
+			if (addUploadAuth(tokeniser, location) == -1)
+				return -1;
+		}
+		else if (token.value == "upload_path") {
+			if (addUploadPath(tokeniser, location) == -1)
 				return -1;
 		}
 		else if (token.value == "rewrite") {
@@ -189,32 +203,80 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 			log_error<std::string>("unexpected directive in location block: " + tokeniser.getLineContext());
 			return -1;
 		}
-		if (token.type == TOKEN_RBRACE)
-			return 0; // End of location block
+	
 	}
 	log_error<std::string>("unexpected end of file while parsing location block" + tokeniser.getLineContext());
 	return -1;
 }
 
 // After parsing, check if value are correct:
-int	config::checkRoot(locationConfig &location) const {
-	if (location.root.empty())
+
+int	config::checkServer(const std::set<serverConfig> &servers) const {
+	std::set<serverConfig>::const_iterator it, ite = servers.end();
+	std::set<int>	ports;
+	for (it = servers.begin(); it != ite; it++) {
+		if (std::find(ports.begin(), ports.end(), it->port) != ports.end()) {
+			log_error<std::string>("Duplicate port found: " + std::to_string(it->port));
+			return -1;
+		}
+		ports.insert(it->port);
+		if (it->locations.empty()) {
+			log_error<std::string>("At least one location block is required in server block");
+			return -1;
+		}
+		std::set<locationConfig>::const_iterator loc_it, loc_ite = it->locations.end();
+		for (loc_it = it->locations.begin(); loc_it != loc_ite; loc_it++) {
+			if (checkRoot(loc_it) == -1)
+				return -1;
+			if (!loc_it->index_files.empty() && checkIndexFiles(loc_it) == -1)
+				return -1;
+			if (!loc_it->upload_path.empty() && checkUploadPath(loc_it) == -1)
+				return -1;
+			if (!loc_it->cgi_configs.empty() && checkCgiConfig(loc_it) == -1)
+				return -1;
+		}
+	}
+	return 0;
+}
+
+int	config::checkRoot(std::set<locationConfig>::const_iterator location) const {
+	if (location->root.empty())
 		return 0;
-	if (checkDirectory(location.root.c_str()) == -1) {
-		log_error<std::string>("Root directory not found: " + location.root);
+	if (checkDirectory(location->root.c_str(), F_OK | R_OK | X_OK) == -1) {
+		log_error<std::string>("Root directory not found: " + location->root);
 		return -1;
 	}
 	return 0;
 }
 
-int	config::checkIndexFiles(locationConfig &location) const {
-	std::set<std::string>::const_iterator it, ite = location.index_files.end();
-	for (it = location.index_files.begin(); it != ite; ++it) {
-		std::string path = location.root + "/" + *it;
-		if (checkFile(path.c_str()) == -1) {
+int	config::checkIndexFiles(std::set<locationConfig>::const_iterator location) const {
+	std::set<std::string>::const_iterator it, ite = location->index_files.end();
+	for (it = location->index_files.begin(); it != ite; ++it) {
+		std::string path = location->root + "/" + *it;
+		if (checkFile(path.c_str(), F_OK | R_OK) == -1) {
 			log_error<std::string>("Index file not found: " + path);
 			return -1;
 		}
 	}
+	return 0;
+}
+
+int	config::checkUploadPath(std::set<locationConfig>::const_iterator location) const {
+	if (checkDirectory(location->upload_path.c_str(), F_OK | R_OK) == -1) {
+		log_error<std::string>("Upload path not found: " + location->upload_path);
+		return -1;
+	}
+	return 0;
+}
+
+int	config::checkCgiConfig(std::set<locationConfig>::const_iterator location) const {
+	std::set<cgiConfig>::const_iterator it, ite = location->cgi_configs.end();
+	for (it = location->cgi_configs.begin(); it != ite; ++it) {
+		if (checkFile(it->script_path.c_str(), F_OK | X_OK) == -1) {
+			log_error<std::string>("CGI executable not found: " + it->script_path);
+			return -1;
+		}
+	}
+	// Maybe add a copy of the server allowed methods here if not CGI methods were specified.
 	return 0;
 }

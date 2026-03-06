@@ -2,20 +2,20 @@
 #include <iostream>
 #include <sstream>
 
+size_t Tokeniser::_line_number = 0;
 // Canonical class form
 
 Tokeniser::Tokeniser(void) {
-	std::cout << "Tokeniser created" << std::endl;
-	this->_line_number = 0;
+	// std::cout << "Tokeniser created" << std::endl;
 }
 
 Tokeniser::Tokeniser(const Tokeniser & other) {
-	std::cout << "Tokeniser copy created" << std::endl;
+	// std::cout << "Tokeniser copy created" << std::endl;
 	*this = other;
 }
 
 Tokeniser::~Tokeniser(void) {
-	std::cout << "Tokeniser destroyed" << std::endl;
+	// std::cout << "Tokeniser destroyed" << std::endl;
 }
 
 Tokeniser &	Tokeniser::operator=(const Tokeniser & other) {
