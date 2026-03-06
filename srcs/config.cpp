@@ -74,18 +74,32 @@ int	config::checkFile(const char *__restrict__ file_path) const {
 		return -1;
 	}
 	if (st.st_size == 0) {
-		log_error<std::string>("config file is empty");
-		return -1;
-	}
-	if (st.st_size > 1024 * 1024) {
-		log_error<std::string>("config file seems too large");
+		log_error<std::string>("File is empty");
 		return -1;
 	}
 	if (!S_ISREG(st.st_mode)) {
-		log_error<std::string>("config file must be a regular disk file");
+		log_error<std::string>("File must be a regular disk file");
 		return -1;
 	}
 	// File is a regular, readable, non-empty file of reasonable size
+	return 0;
+}
+
+int	config::checkDirectory(const char *__restrict__ dir_path) const {
+	if (access(dir_path, F_OK | R_OK | X_OK) == -1) {
+		log_error<std::string>(strerror(errno));
+		return -1;
+	}
+	struct stat st;
+	if (stat(dir_path,  &st) == -1) {
+		log_error<std::string>(strerror(errno));
+		return -1;
+	}
+	if (!S_ISDIR(st.st_mode)) {
+		log_error<std::string>("Path must be a directory");
+		return -1;
+	}
+	// Directory is accessible and valid
 	return 0;
 }
 
@@ -144,7 +158,7 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 		if (token.type == TOKEN_COMMENT || token.type == TOKEN_END)
 			continue;
 		if (token.type != TOKEN_WORD && token.type != TOKEN_RBRACE) {
-			log_error<std::string>("unexpected token in location block: " + token.value);
+			log_error<std::string>("unexpected token in location block: " + token.value + tokeniser.getLineContext());
 			return -1;
 		}
 		if (token.value == "root") {
@@ -171,9 +185,36 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 			if (addCgi(tokeniser, location) == -1)
 				return -1;
 		}
+		else {
+			log_error<std::string>("unexpected directive in location block: " + tokeniser.getLineContext());
+			return -1;
+		}
 		if (token.type == TOKEN_RBRACE)
 			return 0; // End of location block
 	}
 	log_error<std::string>("unexpected end of file while parsing location block" + tokeniser.getLineContext());
 	return -1;
+}
+
+// After parsing, check if value are correct:
+int	config::checkRoot(locationConfig &location) const {
+	if (location.root.empty())
+		return 0;
+	if (checkDirectory(location.root.c_str()) == -1) {
+		log_error<std::string>("Root directory not found: " + location.root);
+		return -1;
+	}
+	return 0;
+}
+
+int	config::checkIndexFiles(locationConfig &location) const {
+	std::set<std::string>::const_iterator it, ite = location.index_files.end();
+	for (it = location.index_files.begin(); it != ite; ++it) {
+		std::string path = location.root + "/" + *it;
+		if (checkFile(path.c_str()) == -1) {
+			log_error<std::string>("Index file not found: " + path);
+			return -1;
+		}
+	}
+	return 0;
 }

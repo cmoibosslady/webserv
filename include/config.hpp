@@ -10,6 +10,7 @@
 struct rewriteConfig {
 	std::string pattern;
 	std::string replacement;
+	int			error_code;
 
 	bool operator<(const rewriteConfig& other) const;
 };
@@ -70,6 +71,7 @@ class config {
 
 	private:
 		int		checkFile(const char *__restrict__ file_path) const;
+		int		checkDirectory(const char *__restrict__ dir_path) const;
 
 		int 	parseServerBloc(std::ifstream &ifs, serverConfig &server) const;
 		int		addPort(Tokeniser &tokeniser, serverConfig &server) const;
@@ -89,6 +91,8 @@ class config {
 		int		checkServer(Tokeniser &tokeniser, serverConfig &server) const;
 		int		checkLocation(Tokeniser &tokeniser, locationConfig &location) const;
 
+		int		checkRoot(locationConfig &location) const;
+		int		checkIndexFiles(locationConfig &location) const;
 	private:
 		std::string _config_file;
 };
