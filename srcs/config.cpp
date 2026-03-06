@@ -50,7 +50,6 @@ int config::parseConfFile(std::set<serverConfig> & servers) const {
 			return -1;
 		}
 		if (token.value == "server" && tokeniser.getNextToken().type == TOKEN_LBRACE) {
-			log_info<std::string>("Parsing server block...");
 			serverConfig server;
 			if (parseServerBloc(file, server) == -1)
 				return -1;
@@ -131,8 +130,6 @@ int config::parseServerBloc(std::ifstream &ifs, serverConfig &server) const {
 				return -1;
 		}
 		else if (token.value == "location") {
-			log_info<std::string>("Parsing location block...");
-			locationConfig location;
 			if (tokeniser.peek().type != TOKEN_WORD) {
 				log_error<std::string>("Expected path after location keyword" + tokeniser.getLineContext());
 				return -1;
@@ -141,7 +138,12 @@ int config::parseServerBloc(std::ifstream &ifs, serverConfig &server) const {
 				log_error<std::string>("Location path cannot be empty" + tokeniser.getLineContext());
 				return -1;
 			}
+			locationConfig location;
 			location.path = tokeniser.getNextToken().value;
+			if (tokeniser.getNextToken().type != TOKEN_LBRACE) {
+				log_error<std::string>("Expected brace after location path" + tokeniser.getLineContext());
+				return -1;
+			}
 			if (parseLocationBloc(ifs, location) == -1)
 				return -1;
 			server.locations.insert(location);
