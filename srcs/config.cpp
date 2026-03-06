@@ -262,7 +262,7 @@ int	config::checkRoot(std::set<locationConfig>::const_iterator location) const {
 int	config::checkIndexFiles(std::set<locationConfig>::const_iterator location) const {
 	std::set<std::string>::const_iterator it, ite = location->index_files.end();
 	for (it = location->index_files.begin(); it != ite; ++it) {
-		std::string path = location->root + "/" + *it;
+		std::string path = location->root + *it;
 		if (checkFile(path.c_str(), F_OK | R_OK) == -1) {
 			log_error<std::string>("Index file not found: " + path);
 			return -1;
