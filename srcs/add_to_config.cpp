@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "config.hpp"
 #include "tokeniser.hpp"
 #include "stoul.hpp"
@@ -106,23 +107,58 @@ int	config::addUploadAuth(Tokeniser &tokeniser, locationConfig &location) const 
 	return consumeSemicolon(tokeniser);
 }
 
-int	config::addRewrite(Tokeniser &tokeniser, locationConfig &location) const {
+int	config::addUploadPath(Tokeniser &tokeniser, locationConfig &location) const {
 	conf_token token = tokeniser.getNextToken();
 	if (token.type != TOKEN_WORD) {
-		log_error<std::string>("Expected a status code, got: " + token.value + tokeniser.getLineContext());
+		log_error<std::string>("Expected a directory path, got: " + token.value + tokeniser.getLineContext());
 		return -1;
 	}
-	int status_code = ft_stoul(token.value);
-	if (status_code < 300 || status_code > 399) {
-		log_error<std::string>("Invalid redirect status code: " + token.value + tokeniser.getLineContext());
+	location.upload_path = token.value;
+	return consumeSemicolon(tokeniser);
+}
+
+int	config::addRewrite(Tokeniser &tokeniser, locationConfig &location) const {
+	conf_token token = tokeniser.getNextToken();
+	if (token.type != TOKEN_WORD && tokeniser.peek().type != TOKEN_WORD && tokeniser.doublePeek().type != TOKEN_WORD) {
+		log_error<std::string>("Expected a rewrite rule, got: " + token.value + tokeniser.getLineContext());
 		return -1;
 	}
+	if (token.value.substr(0, 1) != "^/" || token.value[token.value.size() - 1] != '$') {
+		log_error<std::string>("Rewrite rule must be ^/<path>$ " + tokeniser.getLineContext());
+		return -1;
+	}
+	struct rewriteConfig rule;
+	rule.pattern = token.value.substr(2, token.value.size() - 1);
+	rule.replacement = tokeniser.getNextToken().value;
+	location.rewrites.insert(rule);
+	return consumeSemicolon(tokeniser);
+}
+
+//line exemple: cgi .py /usr/bin/python3 POST;
+int	config::addCgi(Tokeniser &tokeniser, locationConfig &location) const {
+	conf_token token = tokeniser.getNextToken();
+	if (token.type != TOKEN_WORD) {
+		log_error<std::string>("Expected a file extension, got: " + token.value + tokeniser.getLineContext());
+		return -1;
+	}
+	std::string extension = token.value;
 	token = tokeniser.getNextToken();
 	if (token.type != TOKEN_WORD) {
-		log_error<std::string>("Expected a URL, got: " + token.value + tokeniser.getLineContext());
+		log_error<std::string>("Expected a CGI script path, got: " + token.value + tokeniser.getLineContext());
 		return -1;
 	}
-	std::pair<int, std::string> redir(status_code, token.value);
-	location.redirects[status_code] = token.value;
+	std::string script_path = token.value;
+	if (checkFile(script_path.c_str(), F_OK | X_OK) == -1) {
+		log_error<std::string>("CGI script not found or not executable: " + script_path + tokeniser.getLineContext());
+		return -1;
+	}
+	std::set<std::string> methods;
+	while (tokeniser.peek().type == TOKEN_WORD)
+		methods.insert(tokeniser.getNextToken().value);
+	struct cgiConfig cgi;
+	cgi.extension = extension;
+	cgi.script_path = script_path;
+	cgi.allowed_methods = methods;
+	location.cgi_configs.insert(cgi);
 	return consumeSemicolon(tokeniser);
 }
