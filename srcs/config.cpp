@@ -106,6 +106,18 @@ int	config::checkDirectory(const char *__restrict__ dir_path, int mode) const {
 }
 
 int config::parseServerBloc(std::ifstream &ifs, serverConfig &server) const {
+	typedef int (config::*ServerDirectiveHandler)(Tokeniser &, serverConfig &) const;
+	struct ServerDirectiveEntry {
+		const char			*name;
+		ServerDirectiveHandler	handler;
+	};
+	static const ServerDirectiveEntry server_directives[] = {
+		{"listen", &config::addPort},
+		{"error_pages", &config::addErrorPage},
+		{"client_max_body_size", &config::addClientMaxBodySize}
+	};
+	static const size_t server_directives_count = sizeof(server_directives) / sizeof(server_directives[0]);
+
 	std::string line;
 	Tokeniser tokeniser;
 	while (std::getline(ifs, line)) {
@@ -117,19 +129,9 @@ int config::parseServerBloc(std::ifstream &ifs, serverConfig &server) const {
 			log_error<std::string>("unexpected token in server block: " + token.value);
 			return -1;
 		}
-		if (token.value == "listen") {
-			if (addPort(tokeniser, server) == -1)
-				return -1;
-		}
-		else if (token.value == "error_pages") {
-			if (addErrorPage(tokeniser, server) == -1)
-				return -1;
-		}
-		else if (token.value == "client_max_body_size") {
-			if (addClientMaxBodySize(tokeniser, server) == -1)
-				return -1;
-		}
-		else if (token.value == "location") {
+		if (token.type == TOKEN_RBRACE)
+			return 0; // End of server block
+		if (token.value == "location") {
 			if (tokeniser.peek().type != TOKEN_WORD) {
 				log_error<std::string>("Expected path after location keyword" + tokeniser.getLineContext());
 				return -1;
@@ -148,14 +150,44 @@ int config::parseServerBloc(std::ifstream &ifs, serverConfig &server) const {
 				return -1;
 			server.locations.insert(location);
 		}
-		if (token.type == TOKEN_RBRACE)
-			return 0; // End of server block
+		else {
+			bool handled = false;
+			for (size_t i = 0; i < server_directives_count; ++i) {
+				if (token.value == server_directives[i].name) {
+					handled = true;
+					if ((this->*server_directives[i].handler)(tokeniser, server) == -1)
+						return -1;
+					break;
+				}
+			}
+			if (!handled) {
+				log_error<std::string>("unexpected directive in server block: " + token.value + tokeniser.getLineContext());
+				return -1;
+			}
+		}
 	}
 	log_error<std::string>("unexpected end of file while parsing server block" + tokeniser.getLineContext());
 	return -1;
 }
 
 int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) const {
+	typedef int (config::*LocationDirectiveHandler)(Tokeniser &, locationConfig &) const;
+	struct LocationDirectiveEntry {
+		const char				*name;
+		LocationDirectiveHandler	handler;
+	};
+	static const LocationDirectiveEntry location_directives[] = {
+		{"root", &config::addRoot},
+		{"index", &config::addIndex},
+		{"autoindex", &config::addAutoindex},
+		{"allow_methods", &config::addAllowedMethods},
+		{"upload_auth", &config::addUploadAuth},
+		{"upload_path", &config::addUploadPath},
+		{"rewrite", &config::addRewrite},
+		{"cgi", &config::addCgi}
+	};
+	static const size_t location_directives_count = sizeof(location_directives) / sizeof(location_directives[0]);
+
 	std::string line;
 	Tokeniser tokeniser;
 	while (std::getline(ifs, line)) {
@@ -169,43 +201,19 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 			log_error<std::string>("unexpected token in location block: " + token.value + tokeniser.getLineContext());
 			return -1;
 		}
-		if (token.value == "root") {
-			if (addRoot(tokeniser, location) == -1)
-				return -1;
+		bool handled = false;
+		for (size_t i = 0; i < location_directives_count; ++i) {
+			if (token.value == location_directives[i].name) {
+				handled = true;
+				if ((this->*location_directives[i].handler)(tokeniser, location) == -1)
+					return -1;
+				break;
+			}
 		}
-		else if (token.value == "index") {
-			if (addIndex(tokeniser, location) == -1)
-				return -1;
-		}
-		else if (token.value == "autoindex") {
-			if (addAutoindex(tokeniser, location) == -1)
-				return -1;
-		}
-		else if (token.value == "allow_methods") {
-			if (addAllowedMethods(tokeniser, location) == -1)
-				return -1;
-		}
-		else if (token.value == "upload_auth") {
-			if (addUploadAuth(tokeniser, location) == -1)
-				return -1;
-		}
-		else if (token.value == "upload_path") {
-			if (addUploadPath(tokeniser, location) == -1)
-				return -1;
-		}
-		else if (token.value == "rewrite") {
-			if (addRewrite(tokeniser, location) == -1)
-				return -1;
-		}
-		else if (token.value == "cgi") {
-			if (addCgi(tokeniser, location) == -1)
-				return -1;
-		}
-		else {
+		if (!handled) {
 			log_error<std::string>("unexpected directive in location block: " + tokeniser.getLineContext());
 			return -1;
 		}
-	
 	}
 	log_error<std::string>("unexpected end of file while parsing location block" + tokeniser.getLineContext());
 	return -1;
