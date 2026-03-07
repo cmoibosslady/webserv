@@ -29,6 +29,7 @@ SRCS = main.cpp \
 	   tokeniser.cpp 
 
 HEADER =  main.hpp \
+		  main.tpp \
 		  config.hpp \
 		  ft_mem.hpp \
 		  stoul.hpp \

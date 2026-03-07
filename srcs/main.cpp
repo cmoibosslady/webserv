@@ -1,5 +1,6 @@
 #include "config.hpp"
 #include "main.hpp"
+#include "main.tpp"
 #include "tokeniser.hpp"
 
 int	main(int argc, char **argv)

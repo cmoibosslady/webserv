@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include "config.hpp"
+#include "main.tpp"
 #include "tokeniser.hpp"
 #include "stoul.hpp"
 

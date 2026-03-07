@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "config.hpp"
 #include "main.hpp"
+#include "main.tpp"
 #include "tokeniser.hpp"
 
 // Canonical form + constructor with filename
