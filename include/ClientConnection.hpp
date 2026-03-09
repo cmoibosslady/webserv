@@ -19,6 +19,7 @@ class ClientConnection
 		~ClientConnection(void);
 
 		int 	getFd() const;
+		int		closeConnection(void);
 		int		getStatus() const;
 
 	private:

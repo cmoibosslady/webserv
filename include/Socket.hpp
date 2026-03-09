@@ -14,7 +14,8 @@ class Socket {
 		~Socket(void);
 
 		socket_status	init(int port);
-		int	getSockfd(void) const;
+		int				getSockfd(void) const;
+		int				closeSocket(void);
 	
 	private:
 		int				created_socket(void);
@@ -23,7 +24,7 @@ class Socket {
 
 		socket_status	set_socket_nonblock(void);
 
-		int		socket_accept(void);
+		int				socket_accept(void);
 
 		int	inet_aton(const char *cp, struct in_addr *inp);
 

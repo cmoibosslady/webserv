@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include "ClientConnection.hpp"
 #include "main.hpp"
+#include "main.tpp"
 
 ClientConnection::ClientConnection(void): _fd(-1), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
 	// log_info("ClientConnection created");
@@ -23,12 +24,16 @@ ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
 }
 
 ClientConnection::~ClientConnection(void) {
-	close(_fd);
 	log_info("ClientConnection destroyed");
 }
 
 int	ClientConnection::getFd(void) const {
 	return _fd;
+}
+
+int	ClientConnection::closeConnection(void) {
+	close(_fd);
+	return 0;
 }
 
 int	ClientConnection::getStatus(void) const {

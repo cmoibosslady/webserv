@@ -22,17 +22,25 @@ HEADER_DIR = include
 
 SRCS = main.cpp \
 	   add_to_config.cpp \
+	   ClientConnection.cpp \
 	   config.cpp \
 	   ft_mem.cpp \
 	   overload_config.cpp \
+	   Poller.cpp \
+	   Socket.cpp \
 	   stoul.cpp \
+	   TCPServer.cpp \
 	   tokeniser.cpp 
 
 HEADER =  main.hpp \
 		  main.tpp \
+		  ClientConnection.hpp \
 		  config.hpp \
 		  ft_mem.hpp \
+		  Poller.hpp \
+		  Socket.hpp \
 		  stoul.hpp \
+		  TCPServer.hpp \
 		  tokeniser.hpp
 			
 

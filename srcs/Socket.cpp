@@ -23,12 +23,16 @@ Socket&	Socket::operator=(const Socket & other) {
 }
 
 Socket::~Socket(void) {
-	close(_sockfd);
 	// log_info("Socket instance destroyed");
 }
 
 int Socket::getSockfd(void) const {
 	return _sockfd;
+}
+
+int	Socket::closeSocket(void) {
+	close(_sockfd);
+	return 0;
 }
 
 socket_status Socket::init(int port) {

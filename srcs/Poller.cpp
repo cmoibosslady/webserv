@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "ft_mem.hpp"
 #include "main.hpp"
+#include "main.tpp"
 #include "Poller.hpp"
 
 Poller::Poller(void): _nfds(0) {

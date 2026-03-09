@@ -1,6 +1,6 @@
 #include "config.hpp"
 #include "main.hpp"
-#include "main.tpp"
+#include "TCPServer.hpp"
 #include "tokeniser.hpp"
 
 int	main(int argc, char **argv)
@@ -14,4 +14,6 @@ int	main(int argc, char **argv)
 	if (config_setup.parseConfFile(servers) == -1) {
 		return 1;
 	}
+	TCPServer server(servers);
+	server.init();
 }
