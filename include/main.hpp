@@ -14,6 +14,7 @@
 
 # define BUFFER_SIZE 65536
 # define MAX_EVENTS 100024
+# define TIMEOUT 5000
 
 enum connection_status {
 	READING_HEADER,
@@ -26,6 +27,15 @@ enum poll_status {
 	POLL_SUCCESS,
 	POLL_FAILURE,
 	POLL_TIMEOUT
+};
+
+enum socket_status {
+	SOCKET_FAILURE,
+	WRONG_IP_ADDR,
+	BIND_FAILURE,
+	LISTEN_FAILURE,
+	ACCEPT_FAILURE,
+	SOCKET_SUCCESS
 };
 
 template<typename T> void	log_connect(const T & input);

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cstring>
 #include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -227,7 +229,7 @@ int	config::checkServer(const std::set<serverConfig> &servers) const {
 	std::set<int>	ports;
 	for (it = servers.begin(); it != ite; it++) {
 		if (std::find(ports.begin(), ports.end(), it->port) != ports.end()) {
-			log_error<std::string>("Duplicate port found: " + std::to_string(it->port));
+			log_error<std::string>("Duplicate port found");
 			return -1;
 		}
 		ports.insert(it->port);

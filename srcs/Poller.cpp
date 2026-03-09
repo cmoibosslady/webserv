@@ -25,38 +25,29 @@ Poller::~Poller(void) {
 poll_status Poller::add(int fd, short events) {
 	if (_nfds + 1 == MAX_EVENTS)
 		return POLL_FAILURE;
-	struct pollfd	new_fd = {.fd = fd, .events = events};
+	struct pollfd	new_fd = {.fd = fd, .events = events, .revents = 0};
 	_fds.push_back(new_fd);
+	_fdIndexMap[fd] = _fds.size() - 1;
 	_nfds++;
 	return POLL_SUCCESS;
 }
 
 poll_status Poller::remove(int fd) {
-	size_t index = findFd(fd);
-	if (index == _fds.size())
-		return POLL_FAILURE;
-	_fds[findFd(fd)] = _fds[_fds.size() - 1];
+	size_t index = _fdIndexMap[fd];
+	_fdIndexMap[_fds[_fds.size() - 1].fd] = index;
+	_fds[index] = _fds[_fds.size() - 1];
 	_fds.pop_back();
+	_fdIndexMap.erase(fd);
 	_nfds--;
 	return POLL_SUCCESS;
 }
 
 poll_status	Poller::modify(int fd, short events) {
-	size_t index = findFd(fd);
-	if (index == _fds.size())
-		return POLL_FAILURE;
+	size_t index = _fdIndexMap[fd];
 	_fds[index].events = events;
 	return POLL_SUCCESS;
 }
 
 int	Poller::wait(int timeout) {
 	return (poll(_fds.data(), _nfds, timeout));
-}
-
-size_t	Poller::findFd(const int fd) {
-	for (size_t i = 0; i < _fds.size(); i++) {
-		if (_fds[i].fd == fd)
-			return i;
-	}
-	return _fds.size();
 }

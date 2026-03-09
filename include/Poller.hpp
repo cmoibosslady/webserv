@@ -23,9 +23,6 @@ class Poller
 		std::vector<struct pollfd>	_fds;
 		nfds_t			_nfds; // Size of _fds
 		std::map<int, size_t>	_fdIndexMap;
-
-	private:
-		size_t findFd(const int fd);
 };
 
 #endif
