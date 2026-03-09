@@ -21,8 +21,8 @@ class Poller
 
 	private:
 		std::vector<struct pollfd>	_fds;
-		nfds_t			_nfds; // Size of _fds
-		std::map<int, size_t>	_fdIndexMap;
+		nfds_t						_nfds; // Size of _fds
+		std::map<int, size_t>		_fdIndexMap;
 };
 
 #endif

@@ -5,6 +5,8 @@
 # include <ctime>
 # include <string>
 
+# include "main.hpp"
+
 class ClientConnection
 {
 	private:
@@ -20,10 +22,10 @@ class ClientConnection
 		int		getStatus() const;
 
 	private:
-		int _fd;
-		std::string _buffer;
-		int	_status; // READING_HEADERS, READING_BODY, SENDING, CLOSING
-		time_t _lastActivity;
+		int				_fd;
+		std::string		_buffer;
+		client_status	_status;
+		time_t			_lastActivity;
 };
 
 #endif

@@ -16,7 +16,7 @@
 # define MAX_EVENTS 100024
 # define TIMEOUT 5000
 
-enum connection_status {
+enum client_status {
 	READING_HEADER,
 	READING_BODY,
 	SENDING_RESPONSE,

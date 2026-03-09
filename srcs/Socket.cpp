@@ -1,6 +1,11 @@
+#include <fcntl.h>
 #include<sys/socket.h>
+#include <sstream>
 
 #include "Socket.hpp"
+#include "stoul.hpp"
+
+const std::string Socket::_ip = "0.0.0.0";
 
 Socket::Socket(void): _sockfd(-1) {
 	// log_info("Socket instance created");
@@ -20,13 +25,17 @@ Socket::~Socket(void) {
 	// log_info("Socket instance destroyed");
 }
 
-socket_status Socket::init(std::string ip, int port) {
+int Socket::getSockfd(void) const {
+	return _sockfd;
+}
+
+socket_status Socket::init(int port) {
 	_sockfd = created_socket();
 	if (_sockfd < 0)
 		return SOCKET_FAILURE;
 	if (set_socket_nonblock() < 0)
 		return SOCKET_FAILURE;
-	if (bind_socket(ip, port) < 0)
+	if (bind_socket(_ip, port) < 0)
 		return BIND_FAILURE;
 	if (listen_socket() < 0)
 		return LISTEN_FAILURE;
@@ -38,13 +47,48 @@ int Socket::created_socket(void) {
 	return _sockfd;
 }
 
-socket_status	Socket::bind_socket(std::string ip, int port) {
+socket_status	Socket::bind_socket(const std::string ip, int port) {
 	struct sockaddr_in	address;
 	address.sin_family = AF_INET;
 	address.sin_port = htonl(port);
-	if (inet_aton(ip.c_str(), &address.sin_addr) == -1)
+	if (this->inet_aton(ip.c_str(), &address.sin_addr) == -1)
 		return WRONG_IP_ADDR;
 	if (bind(_sockfd, (struct sockaddr *)&address, sizeof(address)) == - 1)
 		return BIND_FAILURE;
+	log_debug<int>(ip + " with listening port ", port);
 	return SOCKET_SUCCESS;
+}
+
+socket_status Socket::listen_socket(void) {
+	if (listen(_sockfd, SOMAXCONN) == -1)
+		return LISTEN_FAILURE;
+	return SOCKET_SUCCESS;
+}
+
+socket_status Socket::set_socket_nonblock(void) {
+	int flags = fcntl(_sockfd, F_GETFL, 0);
+	if (flags == -1)
+		return SOCKET_FAILURE;
+	if (fcntl(_sockfd, F_SETFL, flags | O_NONBLOCK) == -1)
+		return SOCKET_FAILURE;
+	return SOCKET_SUCCESS;
+}
+
+int	Socket::inet_aton(const char *cp, struct in_addr *inp) {
+	std::stringstream ss(cp);
+	std::string token;
+	unsigned long	result = 0;
+
+	for (int i = 3; i >= 0; --i) {
+		if (!std::getline(ss, token, '.'))
+			return -1;
+		unsigned long octet;
+		try { octet = ft_stoul(token); }
+		catch (const std::exception &e) { return -1; }
+		if (octet > 255)
+			return -1;
+		result |= (octet << (i * 8));
+	}
+	inp->s_addr = htonl(result);
+	return 0;
 }

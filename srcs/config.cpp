@@ -227,7 +227,7 @@ int config::parseLocationBloc(std::ifstream &ifs, locationConfig &location) cons
 int	config::checkServer(const std::set<serverConfig> &servers) const {
 	std::set<serverConfig>::const_iterator it, ite = servers.end();
 	std::set<int>	ports;
-	for (it = servers.begin(); it != ite; it++) {
+	for (it = servers.begin(); it != ite; ++it) { // Better to use ++it then it++ because no cache ?
 		if (std::find(ports.begin(), ports.end(), it->port) != ports.end()) {
 			log_error<std::string>("Duplicate port found");
 			return -1;
@@ -264,7 +264,7 @@ int	config::checkRoot(std::set<locationConfig>::const_iterator location) const {
 
 int	config::checkIndexFiles(std::set<locationConfig>::const_iterator location) const {
 	std::set<std::string>::const_iterator it, ite = location->index_files.end();
-	for (it = location->index_files.begin(); it != ite; ++it) {
+	for (it = location->index_files.begin(); it != ite; it++) {
 		std::string path = location->root + *it;
 		if (checkFile(path.c_str(), F_OK | R_OK) == -1) {
 			log_error<std::string>("Index file not found: " + path);
@@ -284,7 +284,7 @@ int	config::checkUploadPath(std::set<locationConfig>::const_iterator location) c
 
 int	config::checkCgiConfig(std::set<locationConfig>::const_iterator location) const {
 	std::set<cgiConfig>::const_iterator it, ite = location->cgi_configs.end();
-	for (it = location->cgi_configs.begin(); it != ite; ++it) {
+	for (it = location->cgi_configs.begin(); it != ite; it++) {
 		if (checkFile(it->script_path.c_str(), F_OK | X_OK) == -1) {
 			log_error<std::string>("CGI executable not found: " + it->script_path);
 			return -1;
