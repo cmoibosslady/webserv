@@ -28,6 +28,14 @@ TCPServer::~TCPServer(void) {
 
 int	TCPServer::init(void) {
 	for (std::set<serverConfig>::const_iterator	it = _servers.begin(); it != _servers.end(); ++it) {
-		
+		Socket	socket;
+		if (socket.init(it->port) != SOCKET_SUCCESS) {
+			log_error("Failed to initialize socket for server");
+			return -1;
+		}
+		log_warning<int>("Server listening on port ", it->port);
+		_sockets.push_back(socket);
 	}
+	log_info("TCP Server initialized successfully");
+	return 0;
 }

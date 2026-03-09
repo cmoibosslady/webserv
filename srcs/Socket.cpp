@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include<sys/socket.h>
 #include <sstream>
+#include <unistd.h>
 
 #include "Socket.hpp"
 #include "stoul.hpp"
@@ -22,6 +23,7 @@ Socket&	Socket::operator=(const Socket & other) {
 }
 
 Socket::~Socket(void) {
+	close(_sockfd);
 	// log_info("Socket instance destroyed");
 }
 
@@ -55,12 +57,11 @@ socket_status	Socket::bind_socket(const std::string ip, int port) {
 		return WRONG_IP_ADDR;
 	if (bind(_sockfd, (struct sockaddr *)&address, sizeof(address)) == - 1)
 		return BIND_FAILURE;
-	log_debug<int>(ip + " with listening port ", port);
 	return SOCKET_SUCCESS;
 }
 
 socket_status Socket::listen_socket(void) {
-	if (listen(_sockfd, SOMAXCONN) == -1)
+	if (listen(_sockfd, SOMAXCONN) == -1) // SOMAXCONN = maximum of pending connection in the queue of the socket
 		return LISTEN_FAILURE;
 	return SOCKET_SUCCESS;
 }
@@ -72,6 +73,13 @@ socket_status Socket::set_socket_nonblock(void) {
 	if (fcntl(_sockfd, F_SETFL, flags | O_NONBLOCK) == -1)
 		return SOCKET_FAILURE;
 	return SOCKET_SUCCESS;
+}
+
+int		Socket::socket_accept(void) {
+	struct sockaddr_in	client_address;
+	socklen_t			client_len = sizeof(client_address);
+	int					client_fd = accept(_sockfd, (struct sockaddr *)&client_address, &client_len);
+	return client_fd;
 }
 
 int	Socket::inet_aton(const char *cp, struct in_addr *inp) {

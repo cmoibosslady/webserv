@@ -31,7 +31,7 @@ template<typename T> void log_warning(const std::string & str, const T & input) 
 }
 
 template<typename T> void	log_error(const T & message) {
-	std::cerr << RED << "[ERROR] " << message << std::endl;
+	std::cerr << RED << "[ERROR] " << message << RESET << std::endl;
 }
 
 template<typename T> void	log_debug(const std::string & message, const T & variable) {

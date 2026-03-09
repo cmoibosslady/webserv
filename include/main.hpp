@@ -17,6 +17,7 @@
 # define TIMEOUT 5000
 
 enum client_status {
+	WAITING,
 	READING_HEADER,
 	READING_BODY,
 	SENDING_RESPONSE,

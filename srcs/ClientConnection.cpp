@@ -1,13 +1,13 @@
+#include <unistd.h>
 #include "ClientConnection.hpp"
 #include "main.hpp"
-#include "main.tpp"
 
-ClientConnection::ClientConnection(void): _fd(-1), _buffer(""), _status(false), _lastActivity(std::time(NULL)) {
+ClientConnection::ClientConnection(void): _fd(-1), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
 	// log_info("ClientConnection created");
 }
 
-ClientConnection::ClientConnection(int fd): _fd(fd), _buffer(""), _status(false), _lastActivity(std::time(NULL)) {
-	log_info("ClientConnection created with fd");
+ClientConnection::ClientConnection(int fd): _fd(fd), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
+	log_info("ClientConnection created after connection accepted");
 }
 
 ClientConnection::ClientConnection(const ClientConnection& other): _fd(other._fd), _buffer(other._buffer), _status(other._status), _lastActivity(other._lastActivity) {
@@ -23,6 +23,7 @@ ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
 }
 
 ClientConnection::~ClientConnection(void) {
+	close(_fd);
 	log_info("ClientConnection destroyed");
 }
 

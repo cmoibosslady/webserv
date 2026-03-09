@@ -23,6 +23,8 @@ class Socket {
 
 		socket_status	set_socket_nonblock(void);
 
+		int		socket_accept(void);
+
 		int	inet_aton(const char *cp, struct in_addr *inp);
 
 	private:
