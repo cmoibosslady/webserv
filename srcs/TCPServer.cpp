@@ -60,7 +60,7 @@ int	TCPServer::wait(void) {
 		log_info("No events occurred within the timeout period");
 		return 0;
 	}
-	log_info("Processing events");
+	// log_info("Processing events");
 	for (std::vector<int>::const_iterator it = ready_fds.begin(); it != ready_fds.end(); ++it) {
 		if (is_a_socket(*it)) {
 			if (add_new_client() != -1)
@@ -71,15 +71,18 @@ int	TCPServer::wait(void) {
 		if (revents & POLLERR) {
 			close_fd("an error occured on fd: ", *it);
 		}
+		else if (revents & POLLHUP) {
+			close_fd("client disconnected on fd: ", *it);
+		}
 		else if (revents & POLLIN) {
-			log_info("Data available to read on fd: ");
+			// log_info("Data available to read on fd: ");
 		}
 		else {
 			log_debug<int>("Event on fd: ", *it);
 		}
 
 	}
-	log_info("Event processing completed");
+	// log_info("Event processing completed");
 	return 0;
 }
 
