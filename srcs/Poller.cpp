@@ -49,6 +49,6 @@ poll_status	Poller::modify(int fd, short events) {
 	return POLL_SUCCESS;
 }
 
-int	Poller::wait(int timeout) {
-	return (poll(_fds.data(), _nfds, timeout));
+std::vector<int>	Poller::wait(int timeout) {
+	poll(_fds.data(), _nfds, timeout);
 }

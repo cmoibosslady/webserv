@@ -43,6 +43,16 @@ int	TCPServer::init(void) {
 		log_warning<int>("Server listening on port ", it->port);
 		_sockets.push_back(socket);
 	}
+	log_info("All server sockets initialized successfully");
+	log_info("Adding server sockets to poller");
+	for (std::vector<Socket>::iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
+		_poller.add(it->getSockfd(), POLLIN);
+	}
 	log_info("TCP Server initialized successfully");
+	return 0;
+}
+
+int	TCPServer::wait(void) {
+	_poller.wait(TIMEOUT);
 	return 0;
 }

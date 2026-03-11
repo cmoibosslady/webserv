@@ -17,6 +17,7 @@ class TCPServer {
 		~TCPServer(void);
 
 		int	init(void);
+		int	wait(void);
 
 	private:
 		std::set<serverConfig>			_servers;
