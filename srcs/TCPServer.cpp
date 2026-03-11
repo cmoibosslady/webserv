@@ -55,7 +55,7 @@ int	TCPServer::init(void) {
 
 int	TCPServer::wait(void) {
 	std::vector<int> ready_fds;
-	_poller.wait(TIMEOUT, ready_fds);
+	_poller.wait(-1, ready_fds);
 	if (ready_fds.empty()) {
 		log_info("No events occurred within the timeout period");
 		return 0;

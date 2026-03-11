@@ -5,6 +5,7 @@
 
 #include "Socket.hpp"
 #include "stoul.hpp"
+#include "main.tpp"
 
 const std::string Socket::_ip = "0.0.0.0";
 
@@ -37,13 +38,13 @@ int	Socket::closeSocket(void) {
 
 socket_status Socket::init(int port) {
 	_sockfd = created_socket();
-	if (_sockfd < 0)
+	if (_sockfd == -1)
 		return SOCKET_FAILURE;
-	if (set_socket_nonblock() < 0)
+	if (set_socket_nonblock() != SOCKET_SUCCESS)
 		return SOCKET_FAILURE;
-	if (bind_socket(_ip, port) < 0)
+	if (bind_socket(_ip, port) != SOCKET_SUCCESS)
 		return BIND_FAILURE;
-	if (listen_socket() < 0)
+	if (listen_socket() != SOCKET_SUCCESS)
 		return LISTEN_FAILURE;
 	return SOCKET_SUCCESS;
 }
@@ -56,7 +57,7 @@ int Socket::created_socket(void) {
 socket_status	Socket::bind_socket(const std::string ip, int port) {
 	struct sockaddr_in	address;
 	address.sin_family = AF_INET;
-	address.sin_port = htonl(port);
+	address.sin_port = htons(port);
 	if (this->inet_aton(ip.c_str(), &address.sin_addr) == -1)
 		return WRONG_IP_ADDR;
 	if (bind(_sockfd, (struct sockaddr *)&address, sizeof(address)) == - 1)
@@ -94,12 +95,12 @@ int	Socket::inet_aton(const char *cp, struct in_addr *inp) {
 	for (int i = 3; i >= 0; --i) {
 		if (!std::getline(ss, token, '.'))
 			return -1;
-		unsigned long octet;
+		unsigned long octet = 0;
 		try { octet = ft_stoul(token); }
 		catch (const std::exception &e) { return -1; }
 		if (octet > 255)
 			return -1;
-		result |= (octet << (i * 8));
+		result |= octet << (i * 8);
 	}
 	inp->s_addr = htonl(result);
 	return 0;

@@ -26,7 +26,7 @@ class Socket {
 
 		int				socket_accept(void);
 
-		int	inet_aton(const char *cp, struct in_addr *inp);
+		int				inet_aton(const char *cp, struct in_addr *inp);
 
 	private:
 		int 						_sockfd;
