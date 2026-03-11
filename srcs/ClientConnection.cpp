@@ -8,11 +8,11 @@ ClientConnection::ClientConnection(void): _fd(-1), _buffer(""), _status(WAITING)
 }
 
 ClientConnection::ClientConnection(int fd): _fd(fd), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
-	log_info("ClientConnection created after connection accepted");
+	// log_info("ClientConnection created after connection accepted");
 }
 
 ClientConnection::ClientConnection(const ClientConnection& other): _fd(other._fd), _buffer(other._buffer), _status(other._status), _lastActivity(other._lastActivity) {
-	log_info("ClientConnection copied");
+	// log_info("ClientConnection copied");
 }
 
 ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
@@ -24,7 +24,7 @@ ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
 }
 
 ClientConnection::~ClientConnection(void) {
-	log_info("ClientConnection destroyed");
+	// log_info("ClientConnection destroyed");
 }
 
 int	ClientConnection::getFd(void) const {

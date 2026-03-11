@@ -21,12 +21,18 @@ class TCPServer {
 
 	private:
 		void	close_fd(std::string msg, int fd);
+		int		is_a_socket(int fd);
+		int		add_new_client();
 	
 	private:
 		std::set<serverConfig>			_servers;
 		Poller							_poller;
 		std::vector<Socket>				_sockets;
 		std::vector<ClientConnection>	_clients;
+
+	private:
+		// to reduce looping on struct
+		const Socket	*_socket_ptr;
 };
 
 #endif

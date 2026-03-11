@@ -80,7 +80,7 @@ socket_status Socket::set_socket_nonblock(void) {
 	return SOCKET_SUCCESS;
 }
 
-int		Socket::socket_accept(void) {
+int		Socket::socket_accept(void) const{
 	struct sockaddr_in	client_address;
 	socklen_t			client_len = sizeof(client_address);
 	int					client_fd = accept(_sockfd, (struct sockaddr *)&client_address, &client_len);
