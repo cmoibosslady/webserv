@@ -83,7 +83,7 @@ int		Socket::socket_accept(void) {
 	struct sockaddr_in	client_address;
 	socklen_t			client_len = sizeof(client_address);
 	int					client_fd = accept(_sockfd, (struct sockaddr *)&client_address, &client_len);
-	return client_fd;
+	return				client_fd;
 }
 
 int	Socket::inet_aton(const char *cp, struct in_addr *inp) {

@@ -17,7 +17,9 @@ class Poller
 		poll_status	add(int fd, short events);
 		poll_status	remove(int fd);
 		poll_status	modify(int fd, short events);
-		int	wait(int timeout);
+		void		wait(int timeout, std::vector<int> &ready_fds);
+
+		short	getRevents(int fd) const;
 
 	private:
 		std::vector<struct pollfd>	_fds;

@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "main.hpp"
 #include "main.tpp"
 #include "TCPServer.hpp"
@@ -53,6 +54,24 @@ int	TCPServer::init(void) {
 }
 
 int	TCPServer::wait(void) {
-	_poller.wait(TIMEOUT);
+	std::vector<int> ready_fds;
+	_poller.wait(TIMEOUT, ready_fds);
+	if (ready_fds.empty()) {
+		log_info("No events occurred within the timeout period");
+		return 0;
+	}
+	log_info("Processing events");
+	for (std::vector<int>::const_iterator it = ready_fds.begin(); it != ready_fds.end(); ++it) {
+		short revents = _poller.getRevents(*it);
+		if (revents | POLLERR || revents | POLLHUP) {
+			close_fd("an error occured on fd: ", *it);
+		}
+	}
 	return 0;
+}
+
+void	TCPServer::close_fd(std::string msg, int fd) {
+	log_warning<int>("Closing fd. Cause: " + msg, fd);
+	close(fd);
+	_poller.remove(fd);
 }

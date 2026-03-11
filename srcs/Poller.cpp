@@ -49,6 +49,15 @@ poll_status	Poller::modify(int fd, short events) {
 	return POLL_SUCCESS;
 }
 
-std::vector<int>	Poller::wait(int timeout) {
+void Poller::wait(int timeout, std::vector<int> &ready_fds) {
 	poll(_fds.data(), _nfds, timeout);
+	for (size_t i = 0; i < _nfds; ++i) {
+		if (_fds[i].revents != 0)
+			ready_fds.push_back(_fds[i].fd);
+	}
+}
+
+short	Poller::getRevents(int fd) const {
+	size_t index = _fdIndexMap.at(fd);
+	return _fds[index].revents;
 }

@@ -16,9 +16,12 @@ class TCPServer {
 		TCPServer&	operator=(const TCPServer &other);
 		~TCPServer(void);
 
-		int	init(void);
-		int	wait(void);
+		int		init(void);
+		int		wait(void);
 
+	private:
+		void	close_fd(std::string msg, int fd);
+	
 	private:
 		std::set<serverConfig>			_servers;
 		Poller							_poller;
