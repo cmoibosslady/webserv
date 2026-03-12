@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <unistd.h>
+#include "cgiControler.hpp"
 #include "main.hpp"
 #include "main.tpp"
 #include "TCPServer.hpp"
@@ -99,7 +101,7 @@ void	TCPServer::close_fd(std::string msg, int fd) {
 }
 
 int		TCPServer::is_a_socket(int fd) {
-	for (std::vector<Socket>::const_iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
+	for (std::vector<Socket>::iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
 		if (it->getSockfd() == fd) {
 			_socket_ptr = &(*it);
 			return 1;
@@ -109,7 +111,7 @@ int		TCPServer::is_a_socket(int fd) {
 }
 
 int		TCPServer::is_a_client(int fd) {
-	for (std::vector<ClientConnection>::const_iterator it = _clients.begin(); it != _clients.end(); ++it) {
+	for (std::vector<ClientConnection>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		if (it->getFd() == fd) {
 			_client_ptr = &(*it);
 			return 1;
@@ -131,35 +133,44 @@ int		TCPServer::add_new_client(void) {
 }
 
 exit_status	TCPServer::handle_client_event(int fd) {
+	_client_ptr->updateLastActivity();
+	client_status status = WAITING;
 	short revents = _poller.getRevents(fd);
 	if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
 		log_warning<int>("Client has error or disconnected", fd);
 		return CLIENT_DISCONNECTED;
 	}
 	else if (revents & POLLIN) {
-		if (_client_ptr->getStatus() == WAITING) {
-			log_info("Client is waiting, ready to read header");
-		}
-		else if (_client_ptr->getStatus() == READING_HEADER) {
-			log_info("Client is reading header, ready to read body");
-		}
-		else if (_client_ptr->getStatus() == READING_BODY) {
-			log_info("Client is reading body, ready to send response");
-		}
-		else {
-			log_warning<int>("Unexpected client status for POLLIN event", _client_ptr->getStatus());
-		}
+		status = _client_ptr->processTransmit();
 	}
 	else if (revents & POLLOUT) {
-		if (_client_ptr->getStatus() == SENDING_RESPONSE) {
-			log_info("Client is sending response, ready to close connection");
-		}
-		else {
-			log_warning<int>("Unexpected client status for POLLOUT event", _client_ptr->getStatus());
-		}
+		status = _client_ptr->sendResponse();
 	}
-	else {
-		log_warning<int>("Unexpected revents value for client event", revents);
+	if (status == CLOSING || status == RECV_FAILURE || status == SEND_FAILURE) {
+		log_info("Taking down client connection");
+		return CLIENT_DISCONNECTED;
+	}
+	else if (status == BUILDING_RESPONSE) {
+		// associer config avec client -> routeur
+		// if cgi needed
+			// do cgi -> return if error on child and behave normal on parent
+			// wait for output of cgi
+			// build response with cgi output and send it
+		// if no cgi -> build response send it
+		if (_client_ptr->needs_cgi() == true) {
+			CGIControler cgi;
+			cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll
+			if (fork_and_exec_cgi(cgi) == EXECVE_FAILURE) {
+				log_error("Failed to fork and exec CGI");
+				return EXECVE_FAILURE;
+			}
+			_cgis.push_back(cgi);
+			_poller.add(cgi.getPipeReadEnd(), POLLIN);
+			if (cgi.need_input() == true)
+				_poller.add(cgi.getPipeWriteEnd(), POLLOUT);
+		}
+		_client_ptr->sendResponse();
+		_poller.modify(fd, POLLOUT);
 	}
 	return SUCCESS;
 }

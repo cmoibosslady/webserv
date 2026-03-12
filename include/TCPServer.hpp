@@ -2,6 +2,7 @@
 # define TCPSERVER_HPP
 
 # include "config.hpp"
+# include "cgiControler.hpp"
 # include "ClientConnection.hpp"
 # include "Poller.hpp"
 # include "Socket.hpp"
@@ -27,16 +28,22 @@ class TCPServer {
 		int			add_new_client();
 		exit_status	handle_client_event(int fd);
 
+		bool		check_for_cgi(void);
+		exit_status	activate_cgi(void);
+		exit_status	handle_cgi_event(int fd);
+		exit_status	fork_and_exec_cgi(CGIControler &cgi);
+
 	private:
 		std::set<serverConfig>			_servers;
 		Poller							_poller;
 		std::vector<Socket>				_sockets;
 		std::vector<ClientConnection>	_clients;
+		std::vector<CGIControler>		_cgis;
 
 	private:
 		// to reduce looping on struct
-		const Socket			*_socket_ptr;
-		const ClientConnection	*_client_ptr;
+		Socket				*_socket_ptr;
+		ClientConnection	*_client_ptr;
 };
 
 #endif

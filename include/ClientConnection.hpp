@@ -6,8 +6,10 @@
 # include <string>
 
 # include "main.hpp"
+# include "Parser.hpp"
+# include "Response.hpp"
 
-class ClientConnection
+class ClientConnection : public Parser, public Response 
 {
 	private:
 		ClientConnection(void);
@@ -23,6 +25,12 @@ class ClientConnection
 		int 	getFd() const;
 		int		closeConnection(void);
 		int		getStatus() const;
+
+		void	updateLastActivity(void);
+		bool	needs_cgi(void) const;
+
+		client_status	processTransmit(void);
+		client_status	sendResponse(void);
 
 	private:
 		int				_fd;
