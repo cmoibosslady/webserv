@@ -15,7 +15,8 @@ class CGIControler {
 	private:
 		const ClientConnection	*_client_ptr;
 		int		_input_pipe[2];
-		int		_output_pipe[2];		
+		int		_output_pipe[2];
+		time_t	_start_time;
 };
 
 #endif
