@@ -16,14 +16,17 @@ class TCPServer {
 		TCPServer&	operator=(const TCPServer &other);
 		~TCPServer(void);
 
-		int		init(void);
-		int		wait(void);
+		int			init(void);
+		int			wait(void);
 
 	private:
-		void	close_fd(std::string msg, int fd);
-		int		is_a_socket(int fd);
-		int		add_new_client();
-	
+		void		close_fd(std::string msg, int fd);
+		int			is_a_socket(int fd);
+		int			is_a_client(int fd);
+
+		int			add_new_client();
+		exit_status	handle_client_event(int fd);
+
 	private:
 		std::set<serverConfig>			_servers;
 		Poller							_poller;
@@ -32,7 +35,8 @@ class TCPServer {
 
 	private:
 		// to reduce looping on struct
-		const Socket	*_socket_ptr;
+		const Socket			*_socket_ptr;
+		const ClientConnection	*_client_ptr;
 };
 
 #endif

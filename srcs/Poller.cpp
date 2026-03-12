@@ -25,7 +25,7 @@ Poller::~Poller(void) {
 
 poll_status Poller::add(int fd, short events) {
 	if (_nfds + 1 == MAX_EVENTS)
-		return POLL_FAILURE;
+		return TOO_MANY_FDS;
 	struct pollfd	new_fd = {.fd = fd, .events = events, .revents = 0};
 	_fds.push_back(new_fd);
 	_fdIndexMap[fd] = _fds.size() - 1;

@@ -55,6 +55,7 @@ int	TCPServer::init(void) {
 
 int	TCPServer::wait(void) {
 	std::vector<int> ready_fds;
+	exit_status st;
 	_poller.wait(-1, ready_fds);
 	if (ready_fds.empty()) {
 		log_info("No events occurred within the timeout period");
@@ -67,35 +68,50 @@ int	TCPServer::wait(void) {
 				log_info("New client connection accepted");
 			continue ;
 		}
-		short revents = _poller.getRevents(*it);
-		if (revents & POLLERR) {
-			close_fd("an error occured on fd: ", *it);
-		}
-		else if (revents & POLLHUP) {
-			close_fd("client disconnected on fd: ", *it);
-		}
-		else if (revents & POLLIN) {
-			// log_info("Data available to read on fd: ");
+		else if (is_a_client(*it)) {
+			st = handle_client_event(*it);
 		}
 		else {
-			log_debug<int>("Event on fd: ", *it);
+			log_warning<int>("The fd must be a pipe", *it);
+			// st = handle_cgi_events(*it);
+			// if (st == EXECVE_FAILURE) {
+				// log_error("FATAL ERROR : Failed execve");
+				// return EXECVE_FAILURE;
 		}
-
+		if (st == CLIENT_DISCONNECTED) {
+			log_info("Client disconnected");
+			close_fd("Client disconnected", *it);
+		}
+		else if (st == EXECVE_FAILURE) {
+			log_error("FATAL ERROR : Failed execve");
+			return EXECVE_FAILURE;
+		}
 	}
-	// log_info("Event processing completed");
 	return 0;
 }
 
 void	TCPServer::close_fd(std::string msg, int fd) {
 	log_warning<int>("Closing fd. Cause: " + msg, fd);
-	close(fd);
 	_poller.remove(fd);
+	_clients.erase(std::remove(_clients.begin(), _clients.end(), *_client_ptr)); // Check if does erase correctly the clients from the server vector
+	_client_ptr = NULL;
+	close(fd);
 }
 
 int		TCPServer::is_a_socket(int fd) {
 	for (std::vector<Socket>::const_iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
 		if (it->getSockfd() == fd) {
 			_socket_ptr = &(*it);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int		TCPServer::is_a_client(int fd) {
+	for (std::vector<ClientConnection>::const_iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		if (it->getFd() == fd) {
+			_client_ptr = &(*it);
 			return 1;
 		}
 	}
@@ -113,3 +129,38 @@ int		TCPServer::add_new_client(void) {
 	_poller.add(client_fd, POLLIN);
 	return 0;
 }
+
+exit_status	TCPServer::handle_client_event(int fd) {
+	short revents = _poller.getRevents(fd);
+	if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
+		log_warning<int>("Client has error or disconnected", fd);
+		return CLIENT_DISCONNECTED;
+	}
+	else if (revents & POLLIN) {
+		if (_client_ptr->getStatus() == WAITING) {
+			log_info("Client is waiting, ready to read header");
+		}
+		else if (_client_ptr->getStatus() == READING_HEADER) {
+			log_info("Client is reading header, ready to read body");
+		}
+		else if (_client_ptr->getStatus() == READING_BODY) {
+			log_info("Client is reading body, ready to send response");
+		}
+		else {
+			log_warning<int>("Unexpected client status for POLLIN event", _client_ptr->getStatus());
+		}
+	}
+	else if (revents & POLLOUT) {
+		if (_client_ptr->getStatus() == SENDING_RESPONSE) {
+			log_info("Client is sending response, ready to close connection");
+		}
+		else {
+			log_warning<int>("Unexpected client status for POLLOUT event", _client_ptr->getStatus());
+		}
+	}
+	else {
+		log_warning<int>("Unexpected revents value for client event", revents);
+	}
+	return SUCCESS;
+}
+

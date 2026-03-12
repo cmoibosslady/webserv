@@ -24,10 +24,15 @@ enum client_status {
 	CLOSING
 };
 
+enum exit_status {
+	EXECVE_FAILURE,
+	CLIENT_DISCONNECTED,
+	SUCCESS
+};
+
 enum poll_status {
-	POLL_SUCCESS,
-	POLL_FAILURE,
-	POLL_TIMEOUT
+	TOO_MANY_FDS,
+	POLL_SUCCESS
 };
 
 enum socket_status {
