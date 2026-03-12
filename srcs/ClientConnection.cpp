@@ -27,6 +27,10 @@ ClientConnection::~ClientConnection(void) {
 	// log_info("ClientConnection destroyed");
 }
 
+bool	ClientConnection::operator==(const ClientConnection& other) const {
+	return _fd == other._fd;
+}
+
 int	ClientConnection::getFd(void) const {
 	return _fd;
 }

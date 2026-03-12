@@ -18,6 +18,8 @@ class ClientConnection
 		ClientConnection& operator=(const ClientConnection& other);
 		~ClientConnection(void);
 
+		bool	operator==(const ClientConnection& other) const;
+
 		int 	getFd() const;
 		int		closeConnection(void);
 		int		getStatus() const;
