@@ -90,6 +90,7 @@ class config {
 		int 	addCgi(Tokeniser &tokeniser, locationConfig &location) const;
 
 		int		checkServer(const std::set<serverConfig> &servers) const;
+		// but we should still start the server if one of the config is good and whatever if all the others are wrong. One should be enough. Just print a error message
 		int		checkLocation(const locationConfig &location) const;
 
 		int		checkRoot(std::set<locationConfig>::const_iterator location) const;
