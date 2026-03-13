@@ -29,6 +29,7 @@ class ClientConnection : public Parser, public Response
 
 		void	updateLastActivity(void);
 		void	setServerConfig(const serverConfig * config);
+		void	setLocationConfig();
 
 		const cgiConfig *	needs_cgi(void) const;
 

@@ -168,12 +168,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		return CLIENT_DISCONNECTED;
 	}
 	else if (status == BUILDING_RESPONSE) {
-		// associer config avec client -> routeur
-		// if cgi needed
-			// do cgi -> return if error on child and behave normal on parent
-			// wait for output of cgi
-			// build response with cgi output and send it
-		// if no cgi -> build response send it
+		_client_ptr->setLocationConfig();
 		if (_client_ptr->needs_cgi()) {
 			// CGIControler cgi;
 			// cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll

@@ -54,6 +54,33 @@ void	ClientConnection::setServerConfig(const serverConfig * config) {
 	_server = config;
 }
 
+void	ClientConnection::setLocationConfig() {
+	if (!_server)
+		return;
+	std::string uri = get_uri();
+	while (!uri.empty()) {
+		log_warning<std::string>("Trying to match location for URI: ", uri);
+		for (std::set<locationConfig>::const_iterator it = _server->locations.begin(); it != _server->locations.end(); ++it) {
+			if (uri == it->path) {
+				_location = &(*it);
+				return;
+			}
+		}
+		size_t last_slash = uri.find_last_of('/');
+		if (last_slash == std::string::npos)
+			break;
+		else {
+			if (last_slash == uri.size() - 1) {
+				uri.erase(last_slash + 1);		
+			}
+			else
+				uri.erase(last_slash);
+		}
+	}
+	_location = 0;
+}
+
+
 const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	if (!_location || !_location->cgi_configs.empty())
 		return 0;
@@ -98,7 +125,7 @@ client_status	ClientConnection::processTransmit(void) {
 	return _status;
 }
 
-client_status	ClientConnection::prepareResponse(void) {
+client_status	ClientConnection::prepareResponse() {
 	log_info("Preparing response");
 	_buffer = "1. 2. 3. 4. 5. 6. 7.";
 	build_response(_buffer);
