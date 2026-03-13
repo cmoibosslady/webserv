@@ -17,6 +17,8 @@ class Socket {
 		int				getSockfd(void) const;
 		int				socket_accept(struct sockaddr_in &client_address) const;
 		int				closeSocket(void);
+
+		static int		get_port(int fd);
 	
 	private:
 		int				created_socket(void);

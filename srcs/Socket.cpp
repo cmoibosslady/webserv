@@ -41,11 +41,11 @@ socket_status Socket::init(int port) {
 	if (_sockfd == -1)
 		return SOCKET_FAILURE;
 	if (set_socket_nonblock() != SOCKET_SUCCESS)
-		return SOCKET_FAILURE;
+		return (close(_sockfd), SOCKET_FAILURE);
 	if (bind_socket(_ip, port) != SOCKET_SUCCESS)
-		return BIND_FAILURE;
+		return (close(_sockfd), BIND_FAILURE);
 	if (listen_socket() != SOCKET_SUCCESS)
-		return LISTEN_FAILURE;
+		return (close(_sockfd), LISTEN_FAILURE);
 	return SOCKET_SUCCESS;
 }
 
@@ -103,4 +103,12 @@ int	Socket::inet_aton(const char *cp, struct in_addr *inp) {
 	}
 	inp->s_addr = htonl(result);
 	return 0;
+}
+
+int	Socket::get_port(int fd) {
+	struct sockaddr sck;
+	socklen_t len = sizeof(sck);
+	getsockname(fd, &sck, &len);
+	unsigned int port = ((struct sockaddr_in *)&sck)->sin_port;
+	return port;
 }

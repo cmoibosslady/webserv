@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <arpa/inet.h>
 #include <csignal>
 #include <unistd.h>
 #include "cgiControler.hpp"
@@ -30,9 +31,9 @@ TCPServer&	TCPServer::operator=(const TCPServer &other) {
 }
 
 TCPServer::~TCPServer(void) {
-	for (std::vector<Socket>::iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
-		it->closeSocket();
-	}
+	// for (std::vector<Socket>::iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
+	// 	it->closeSocket();
+	// }
 	for (std::vector<ClientConnection>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		it->closeConnection();
 	}
@@ -142,7 +143,7 @@ int		TCPServer::add_new_client(void) {
 		return -1;
 	}
 	ClientConnection new_client(client_fd);
-	const serverConfig * config = find_server_config(client_address.sin_port);
+	const serverConfig * config = find_server_config(Socket::get_port(client_fd));
 	if (!config) {
 		log_error("Client is refused");
 		close(client_fd);
@@ -155,6 +156,7 @@ int		TCPServer::add_new_client(void) {
 }
 
 const serverConfig *	TCPServer::find_server_config(int port) {
+	log_debug<int>("Finding server config for port ", port);
 	for (std::set<serverConfig>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
 		if (it->port == port)
 			return &(*it);
