@@ -50,6 +50,10 @@ void	ClientConnection::updateLastActivity(void) {
 	_lastActivity = std::time(NULL);
 }
 
+void	ClientConnection::setServerConfig(const serverConfig * config) {
+	_server = config;
+}
+
 client_status	ClientConnection::processTransmit(void) {
 	char buffer[BUFFER_SIZE];
 	ft_memset(buffer, 0, BUFFER_SIZE);
@@ -61,15 +65,15 @@ client_status	ClientConnection::processTransmit(void) {
 		return RECV_FAILURE;
 	}
 	_buffer += std::string(buffer);
-	if (_buffer.find("\r\n") != std::string::npos && _status == WAITING) {
+	if (_status == WAITING && _buffer.find("\r\n") != std::string::npos) {
 		_status = parse_request_line(_buffer.substr(0, _buffer.find("\r\n")));
 		_buffer.erase(0, _buffer.find("\r\n") + 2);
 	}
-	if (_buffer.find("\r\n\r\n") != std::string::npos && _status == READING_HEADER) {
+	if (_status == READING_HEADER && _buffer.find("\r\n\r\n") != std::string::npos) {
 		_status = parse_header(_buffer.substr(0, _buffer.find("\r\n\r\n")));
 		_buffer.erase(0, _buffer.find("\r\n\r\n") + 4);
 	}
-	if (_buffer.size() > 0 && _status == READING_BODY) {
+	if (_status == READING_BODY && _buffer.size() > 0) {
 		_status = parse_body(_buffer);
 		_buffer.clear();
 		if (_status == BUILDING_RESPONSE && check_chunk()) {
@@ -79,5 +83,17 @@ client_status	ClientConnection::processTransmit(void) {
 			}
 		}
 	}
+	return _status;
+}
+
+client_status	ClientConnection::prepareResponse(void) {
+	log_info("Preparing response");
+	_buffer = "1. 2. 3. 4. 5. 6. 7.";
+	build_response(_buffer);
+	return SENDING_RESPONSE;
+}
+
+client_status	ClientConnection::send_response(void) {
+	_status = Response::send_response();
 	return _status;
 }

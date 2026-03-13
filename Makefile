@@ -22,6 +22,7 @@ HEADER_DIR = include
 
 SRCS = main.cpp \
 	   add_to_config.cpp \
+	   cgiControler.cpp \
 	   ClientConnection.cpp \
 	   config.cpp \
 	   ft_mem.cpp \
@@ -36,6 +37,7 @@ SRCS = main.cpp \
 
 HEADER =  main.hpp \
 		  main.tpp \
+		  cgiControler.hpp \
 		  ClientConnection.hpp \
 		  config.hpp \
 		  ft_mem.hpp \

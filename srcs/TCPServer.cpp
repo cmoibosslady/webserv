@@ -121,14 +121,31 @@ int		TCPServer::is_a_client(int fd) {
 }
 
 int		TCPServer::add_new_client(void) {
-	int client_fd = _socket_ptr->socket_accept();
+	struct sockaddr_in	client_address;
+	int client_fd = _socket_ptr->socket_accept(client_address);
 	if (client_fd == -1) {
 		log_error("Failed to accept new client connection");
 		return -1;
 	}
 	ClientConnection new_client(client_fd);
+	const serverConfig * config = find_server_config(client_address.sin_port);
+	if (!config) {
+		log_error("Client is refused");
+		close(client_fd);
+		return -1;
+	}
+	new_client.setServerConfig(config);
 	_clients.push_back(new_client);
 	_poller.add(client_fd, POLLIN);
+	return 0;
+}
+
+const serverConfig *	TCPServer::find_server_config(int port) {
+	for (std::set<serverConfig>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
+		if (it->port == port)
+			return &(*it);
+	}
+	log_error("No server config found for port");
 	return 0;
 }
 
@@ -144,7 +161,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		status = _client_ptr->processTransmit();
 	}
 	else if (revents & POLLOUT) {
-		status = _client_ptr->sendResponse();
+		status = _client_ptr->prepareResponse();
 	}
 	if (status == CLOSING || status == RECV_FAILURE || status == SEND_FAILURE) {
 		log_info("Taking down client connection");
@@ -158,19 +175,20 @@ exit_status	TCPServer::handle_client_event(int fd) {
 			// build response with cgi output and send it
 		// if no cgi -> build response send it
 		if (_client_ptr->needs_cgi() == true) {
-			CGIControler cgi;
-			cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll
-			if (fork_and_exec_cgi(cgi) == EXECVE_FAILURE) {
-				log_error("Failed to fork and exec CGI");
-				return EXECVE_FAILURE;
-			}
-			_cgis.push_back(cgi);
-			_poller.add(cgi.getPipeReadEnd(), POLLIN);
-			if (cgi.need_input() == true)
-				_poller.add(cgi.getPipeWriteEnd(), POLLOUT);
+			// CGIControler cgi;
+			// cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll
+			// if (fork_and_exec_cgi(cgi) == EXECVE_FAILURE) {
+				// log_error("Failed to fork and exec CGI");
+				// return EXECVE_FAILURE;
+			// }
+			// _cgis.push_back(cgi);
+			// _poller.add(cgi.getPipeReadEnd(), POLLIN);
+			// if (cgi.need_input() == true)
+				// _poller.add(cgi.getPipeWriteEnd(), POLLOUT);
+			log_info("CGI detected");
 		}
-		_client_ptr->sendResponse();
 		_poller.modify(fd, POLLOUT);
+		_client_ptr->prepareResponse();
 	}
 	return SUCCESS;
 }

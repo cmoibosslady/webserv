@@ -21,17 +21,18 @@ class TCPServer {
 		int			wait(void);
 
 	private:
-		void		close_fd(std::string msg, int fd);
-		int			is_a_socket(int fd);
-		int			is_a_client(int fd);
+		void			close_fd(std::string msg, int fd);
+		int				is_a_socket(int fd);
+		int				is_a_client(int fd);
 
-		int			add_new_client();
-		exit_status	handle_client_event(int fd);
+		int						add_new_client();
+		const serverConfig *	find_server_config(int fd);
+		exit_status				handle_client_event(int fd);
 
-		bool		check_for_cgi(void);
-		exit_status	activate_cgi(void);
-		exit_status	handle_cgi_event(int fd);
-		exit_status	fork_and_exec_cgi(CGIControler &cgi);
+		bool			check_for_cgi(void);
+		exit_status		activate_cgi(void);
+		exit_status		handle_cgi_event(int fd);
+		exit_status		fork_and_exec_cgi(CGIControler &cgi);
 
 	private:
 		std::set<serverConfig>			_servers;

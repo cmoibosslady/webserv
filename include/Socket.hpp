@@ -15,7 +15,7 @@ class Socket {
 
 		socket_status	init(int port);
 		int				getSockfd(void) const;
-		int				socket_accept(void) const;
+		int				socket_accept(struct sockaddr_in &client_address) const;
 		int				closeSocket(void);
 	
 	private:
