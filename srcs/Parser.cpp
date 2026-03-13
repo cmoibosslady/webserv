@@ -59,6 +59,10 @@ client_status	Parser::parse_header(const std::string & raw_header) {
 	std::string key, value;
 	std::stringstream ss(raw_header);
 	while (std::getline(ss, key, ':')) {
+		if (key.find("\r\n\r\n") != std::string::npos) {
+			log_info("End of headers reached");
+			return READING_BODY;
+		}
 		if (std::getline(ss, value)) {
 			_headers[key] = value;
 		}
@@ -67,24 +71,32 @@ client_status	Parser::parse_header(const std::string & raw_header) {
 			return BAD_REQUEST; // stop parsing the header, flush the socket, send 400 Bad Request
 		}
 	}
-	return READING_BODY;
+	log_info("Finished parsing headers");
+	if (_method == "POST")
+		return READING_BODY;
+	else
+		return BUILDING_RESPONSE;
 }
 
 // This function, the body is not necessarily complete
 client_status	Parser::parse_body(const std::string & body) {
-	log_info("Parsing body: " + body);
 	_body.append(body);
+	if (check_chunk() == true && _body.find("\r\n0\r\n\r\n") != std::string::npos) {
+		body.substr(0, body.find("\r\n0\r\n\r\n") + 7);
+		return BUILDING_RESPONSE;
+	}
 	if (body.find("\r\n\r\n") != std::string::npos) {
 		log_info("End of body reached");
-		return SENDING_RESPONSE;
+		_body.substr(0, body.find("\r\n\r\n") + 4);
+		return BUILDING_RESPONSE;
 	}
+	log_info("Body not complete yet");
 	return READING_BODY;
 }
 
 // For chunk content-> transformation of the body happens rigth before receiving the body
 
 bool	Parser::check_chunk(void) {
-	log_info("Checking if body is chunked");
 	std::map<std::string, std::string>::const_iterator it = _headers.find("Transfer-Encoding");
 	if (it != _headers.end() && it->second.find("chunked") != std::string::npos) {
 		return true;

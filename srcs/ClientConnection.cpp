@@ -7,10 +7,14 @@
 
 ClientConnection::ClientConnection(void): Parser(), Response(-1), _fd(-1), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
 	// log_info("ClientConnection created");
+	_server = 0;
+	_location = 0;
 }
 
 ClientConnection::ClientConnection(int fd): Parser(), Response(fd), _fd(fd), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
 	// log_info("ClientConnection created after connection accepted");
+	_server = 0;
+	_location = 0;
 }
 
 ClientConnection::ClientConnection(const ClientConnection& other): Parser(other), Response(other), _fd(other._fd), _buffer(other._buffer), _status(other._status), _lastActivity(other._lastActivity) {
@@ -22,6 +26,8 @@ ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
 	_buffer = other._buffer;
 	_status = other._status;
 	_lastActivity = other._lastActivity;
+	_server = other._server;
+	_location = other._location;
 	return *this;
 }
 

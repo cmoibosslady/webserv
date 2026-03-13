@@ -152,6 +152,7 @@ int		TCPServer::add_new_client(void) {
 	new_client.setServerConfig(config);
 	_clients.push_back(new_client);
 	_poller.add(client_fd, POLLIN);
+	log_info<std::string>("Added new client");
 	return 0;
 }
 
@@ -177,13 +178,14 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		status = _client_ptr->processTransmit();
 	}
 	else if (revents & POLLOUT) {
-		status = _client_ptr->prepareResponse();
+		status = _client_ptr->send_response();
 	}
 	if (status == CLOSING || status == RECV_FAILURE || status == SEND_FAILURE) {
 		log_info("Taking down client connection");
 		return CLIENT_DISCONNECTED;
 	}
 	else if (status == BUILDING_RESPONSE) {
+		log_info("Building response for client");
 		_client_ptr->setLocationConfig();
 		if (_client_ptr->needs_cgi()) {
 			// CGIControler cgi;
@@ -198,8 +200,10 @@ exit_status	TCPServer::handle_client_event(int fd) {
 				// _poller.add(cgi.getPipeWriteEnd(), POLLOUT);
 			log_info("CGI detected");
 		}
-		_poller.modify(fd, POLLOUT);
-		_client_ptr->prepareResponse();
+		status = _client_ptr->prepareResponse();
+		if (status == SENDING_RESPONSE) {
+			_poller.modify(fd, POLLOUT);
+		}
 	}
 	return SUCCESS;
 }

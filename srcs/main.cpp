@@ -17,7 +17,9 @@ int	main(int argc, char **argv)
 	}
 	TCPServer server(servers);
 	signal(SIGINT, TCPServer::signal_handler);
-	server.init();
+	if (server.init() == -1) {
+		return 1;
+	}
 	while (!server.wait()) {
 	}
 }
