@@ -31,9 +31,9 @@ TCPServer&	TCPServer::operator=(const TCPServer &other) {
 }
 
 TCPServer::~TCPServer(void) {
-	// for (std::vector<Socket>::iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
-	// 	it->closeSocket();
-	// }
+	for (std::vector<Socket>::iterator it = _sockets.begin(); it != _sockets.end(); ++it) {
+		it->closeSocket();
+	}
 	for (std::vector<ClientConnection>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		it->closeConnection();
 	}

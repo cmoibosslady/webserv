@@ -1,5 +1,5 @@
 #include <fcntl.h>
-#include<sys/socket.h>
+#include <sys/socket.h>
 #include <sstream>
 #include <unistd.h>
 
@@ -109,6 +109,6 @@ int	Socket::get_port(int fd) {
 	struct sockaddr sck;
 	socklen_t len = sizeof(sck);
 	getsockname(fd, &sck, &len);
-	unsigned int port = ((struct sockaddr_in *)&sck)->sin_port;
+	unsigned int port = ntohs(((struct sockaddr_in *)&sck)->sin_port);
 	return port;
 }
