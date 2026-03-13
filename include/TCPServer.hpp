@@ -17,6 +17,8 @@ class TCPServer {
 		TCPServer&	operator=(const TCPServer &other);
 		~TCPServer(void);
 
+		static void		signal_handler(int signum);
+
 		int			init(void);
 		int			wait(void);
 
@@ -41,6 +43,7 @@ class TCPServer {
 		std::vector<ClientConnection>	_clients;
 		// std::vector<CGIControler>		_cgis;
 		// LATER
+		static bool						_close_server;
 
 	private:
 		// to reduce looping on struct

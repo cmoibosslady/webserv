@@ -1,3 +1,4 @@
+#include <csignal>
 #include "config.hpp"
 #include "main.hpp"
 #include "TCPServer.hpp"
@@ -15,6 +16,7 @@ int	main(int argc, char **argv)
 		return 1;
 	}
 	TCPServer server(servers);
+	signal(SIGINT, TCPServer::signal_handler);
 	server.init();
 	while (!server.wait()) {
 	}

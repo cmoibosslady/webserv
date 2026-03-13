@@ -1,9 +1,12 @@
 #include <algorithm>
+#include <csignal>
 #include <unistd.h>
 #include "cgiControler.hpp"
 #include "main.hpp"
 #include "main.tpp"
 #include "TCPServer.hpp"
+
+bool	TCPServer::_close_server = false;
 
 TCPServer::TCPServer(void) {
 	// log_info("TCPServer private constructor called");
@@ -36,6 +39,13 @@ TCPServer::~TCPServer(void) {
 	log_info("TCPServer destroyed");
 }
 
+void	TCPServer::signal_handler(int signum) {
+	if (signum == SIGINT) {
+		log_info("SIGINT received, shutting down server...");
+		_close_server = true;
+	}
+}
+
 int	TCPServer::init(void) {
 	for (std::set<serverConfig>::const_iterator	it = _servers.begin(); it != _servers.end(); ++it) {
 		Socket	socket;
@@ -59,6 +69,10 @@ int	TCPServer::wait(void) {
 	std::vector<int> ready_fds;
 	exit_status st;
 	_poller.wait(-1, ready_fds);
+	if (_close_server) {
+			log_info("Server is shutting down, ignoring events");
+			return 1;
+	}
 	if (ready_fds.empty()) {
 		log_info("No events occurred within the timeout period");
 		return 0;
