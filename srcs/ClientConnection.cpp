@@ -63,7 +63,7 @@ void	ClientConnection::setLocationConfig() {
 	log_debug<int>("Server port: ", _server->port);
 	std::string uri = get_uri();
 	while (!uri.empty()) {
-		log_warning<std::string>("Trying to match location for URI: ", uri);
+		log_debug<std::string>("Trying to match location for URI: ", uri);
 		for (std::set<locationConfig>::const_iterator it = _server->locations.begin(); it != _server->locations.end(); ++it) {
 			if (uri == it->path) {
 				_location = &(*it);
