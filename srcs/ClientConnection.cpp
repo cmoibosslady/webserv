@@ -54,6 +54,18 @@ void	ClientConnection::setServerConfig(const serverConfig * config) {
 	_server = config;
 }
 
+const cgiConfig *	ClientConnection::needs_cgi(void) const {
+	if (!_location || !_location->cgi_configs.empty())
+		return 0;
+	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'));
+	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {
+		if (it->extension == uri_extension)
+
+			return &(*it);
+	}
+	return 0;
+}
+
 client_status	ClientConnection::processTransmit(void) {
 	char buffer[BUFFER_SIZE];
 	ft_memset(buffer, 0, BUFFER_SIZE);

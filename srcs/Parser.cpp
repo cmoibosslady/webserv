@@ -1,5 +1,6 @@
 #include <sstream>
 #include <stoul.hpp>
+#include "main.tpp"
 #include "Parser.hpp"
 
 Parser::Parser(void) {

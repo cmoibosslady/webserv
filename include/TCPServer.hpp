@@ -39,7 +39,8 @@ class TCPServer {
 		Poller							_poller;
 		std::vector<Socket>				_sockets;
 		std::vector<ClientConnection>	_clients;
-		std::vector<CGIControler>		_cgis;
+		// std::vector<CGIControler>		_cgis;
+		// LATER
 
 	private:
 		// to reduce looping on struct

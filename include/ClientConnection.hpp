@@ -30,11 +30,11 @@ class ClientConnection : public Parser, public Response
 		void	updateLastActivity(void);
 		void	setServerConfig(const serverConfig * config);
 
-		bool	needs_cgi(void) const;
+		const cgiConfig *	needs_cgi(void) const;
 
-		client_status	processTransmit(void);
-		client_status	prepareResponse(void);
-		client_status	send_response(void);
+		client_status		processTransmit(void);
+		client_status		prepareResponse(void);
+		client_status		send_response(void);
 
 	private:
 		int						_fd;

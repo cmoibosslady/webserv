@@ -174,7 +174,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 			// wait for output of cgi
 			// build response with cgi output and send it
 		// if no cgi -> build response send it
-		if (_client_ptr->needs_cgi() == true) {
+		if (_client_ptr->needs_cgi()) {
 			// CGIControler cgi;
 			// cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll
 			// if (fork_and_exec_cgi(cgi) == EXECVE_FAILURE) {
