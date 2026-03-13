@@ -149,15 +149,14 @@ int		TCPServer::add_new_client(void) {
 		close(client_fd);
 		return -1;
 	}
-	new_client.setServerConfig(config);
 	_clients.push_back(new_client);
+	_clients.back().setServerConfig(config);
 	_poller.add(client_fd, POLLIN);
 	log_info<std::string>("Added new client");
 	return 0;
 }
 
 const serverConfig *	TCPServer::find_server_config(int port) {
-	log_debug<int>("Finding server config for port ", port);
 	for (std::set<serverConfig>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
 		if (it->port == port)
 			return &(*it);
