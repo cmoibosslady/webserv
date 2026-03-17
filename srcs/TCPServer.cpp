@@ -110,6 +110,7 @@ int	TCPServer::wait(void) {
 void	TCPServer::close_fd(std::string msg, int fd) {
 	log_warning<int>("Closing fd. Cause: " + msg, fd);
 	_poller.remove(fd);
+	_client_ptr->clean_fd();
 	_clients.erase(std::remove(_clients.begin(), _clients.end(), *_client_ptr)); // Check if does erase correctly the clients from the server vector
 	_client_ptr = NULL;
 	close(fd);

@@ -67,6 +67,7 @@ void	ClientConnection::setLocationConfig() {
 		for (std::set<locationConfig>::const_iterator it = _server->locations.begin(); it != _server->locations.end(); ++it) {
 			if (uri == it->path) {
 				_location = &(*it);
+				log_debug<std::string>("Matched location: ", _location->path);
 				return;
 			}
 		}
@@ -87,6 +88,8 @@ void	ClientConnection::setLocationConfig() {
 
 const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	if (!_location || !_location->cgi_configs.empty())
+		return 0;
+	if (get_uri().find('.') == std::string::npos)
 		return 0;
 	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'));
 	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {

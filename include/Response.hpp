@@ -15,6 +15,8 @@ class Response {
 		Response & operator=(const Response & other);
 		~Response(void);
 
+		void				clean_fd(void);
+
 	protected:
 		bool				build_response(const std::string content);
 		client_status		send_response(void);
