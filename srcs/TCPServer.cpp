@@ -188,7 +188,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	else if (status == BUILDING_RESPONSE) {
 		log_info("Building response for client");
 		_client_ptr->setLocationConfig();
-		if (_client_ptr->needs_cgi()) {
+		_cgi_ptr = _client_ptr->needs_cgi();
+		if (_cgi_ptr != NULL) {
 			// CGIControler cgi;
 			// cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll
 			// if (fork_and_exec_cgi(cgi) == EXECVE_FAILURE) {

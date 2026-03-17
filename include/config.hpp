@@ -20,7 +20,7 @@ struct cgiConfig {
 	std::string extension;
 	std::string script_path;
 
-	std::set<std::string> allowed_methods; // by default, all methods are allowed
+	std::set<std::string> allowed_methods; // by default, no method is allowed
 	bool operator<(const cgiConfig& other) const;
 };
 

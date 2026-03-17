@@ -49,6 +49,7 @@ class TCPServer {
 		// to reduce looping on struct
 		Socket				*_socket_ptr;
 		ClientConnection	*_client_ptr;
+		const cgiConfig		*_cgi_ptr;
 };
 
 #endif

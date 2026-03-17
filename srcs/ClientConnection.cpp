@@ -88,16 +88,15 @@ void	ClientConnection::setLocationConfig() {
 
 const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	if (!_location || !_location->cgi_configs.empty())
-		return 0;
+		return NULL;
 	if (get_uri().find('.') == std::string::npos)
-		return 0;
+		return NULL;
 	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'));
 	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {
 		if (it->extension == uri_extension)
-
 			return &(*it);
 	}
-	return 0;
+	return NULL;
 }
 
 client_status	ClientConnection::processTransmit(void) {
@@ -112,7 +111,7 @@ client_status	ClientConnection::processTransmit(void) {
 		return RECV_FAILURE;
 	}
 	_buffer += std::string(buffer);
-	log_debug<std::string>("Received data: ", _buffer);
+	// log_debug<std::string>("Received data: ", _buffer);
 	if (_status == WAITING && _buffer.find("\r\n") != std::string::npos) {
 		_status = parse_request_line(_buffer.substr(0, _buffer.find("\r\n")));
 		_buffer.erase(0, _buffer.find("\r\n") + 2);
