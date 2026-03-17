@@ -85,9 +85,12 @@ client_status	Parser::parse_body(const std::string & body) {
 		body.substr(0, body.find("\r\n0\r\n\r\n") + 7);
 		return BUILDING_RESPONSE;
 	}
-	if (body.find("\r\n\r\n") != std::string::npos) {
+	size_t content_length = 0;
+	try { content_length = ft_stoul(_headers["Content-Length"]); }
+	catch (const std::exception & e) { return BAD_REQUEST; }
+	if (_body.size() >= content_length) {
 		log_info("End of body reached");
-		_body.substr(0, body.find("\r\n\r\n") + 4);
+		_body.substr(0, content_length);
 		return BUILDING_RESPONSE;
 	}
 	log_info("Body not complete yet");

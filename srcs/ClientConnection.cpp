@@ -112,6 +112,7 @@ client_status	ClientConnection::processTransmit(void) {
 		return RECV_FAILURE;
 	}
 	_buffer += std::string(buffer);
+	log_debug<std::string>("Received data: ", _buffer);
 	if (_status == WAITING && _buffer.find("\r\n") != std::string::npos) {
 		_status = parse_request_line(_buffer.substr(0, _buffer.find("\r\n")));
 		_buffer.erase(0, _buffer.find("\r\n") + 2);

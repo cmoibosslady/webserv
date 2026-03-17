@@ -69,6 +69,7 @@ int	TCPServer::init(void) {
 int	TCPServer::wait(void) {
 	std::vector<int> ready_fds;
 	exit_status st;
+	log_info("Waiting for events...");
 	_poller.wait(-1, ready_fds);
 	if (_close_server) {
 			log_info("Server is shutting down, ignoring events");
