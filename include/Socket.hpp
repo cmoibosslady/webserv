@@ -24,7 +24,7 @@ class Socket {
 		int				created_socket(void);
 		socket_status	bind_socket(const std::string ip, int port);
 		socket_status	listen_socket(void);
-		socket_status	set_socket_nonblock(void);
+		socket_status	set_socket_options(void);
 
 		int				inet_aton(const char *cp, struct in_addr *inp);
 

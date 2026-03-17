@@ -101,6 +101,7 @@ const cgiConfig *	ClientConnection::needs_cgi(void) const {
 }
 
 client_status	ClientConnection::processTransmit(void) {
+	log_info("Processing client data");
 	char buffer[BUFFER_SIZE];
 	ft_memset(buffer, 0, BUFFER_SIZE);
 	ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE - 1, 0);

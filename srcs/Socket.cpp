@@ -40,7 +40,7 @@ socket_status Socket::init(int port) {
 	_sockfd = created_socket();
 	if (_sockfd == -1)
 		return SOCKET_FAILURE;
-	if (set_socket_nonblock() != SOCKET_SUCCESS)
+	if (set_socket_options() != SOCKET_SUCCESS)
 		return (close(_sockfd), SOCKET_FAILURE);
 	if (bind_socket(_ip, port) != SOCKET_SUCCESS)
 		return (close(_sockfd), BIND_FAILURE);
@@ -71,7 +71,10 @@ socket_status Socket::listen_socket(void) {
 	return SOCKET_SUCCESS;
 }
 
-socket_status Socket::set_socket_nonblock(void) {
+socket_status Socket::set_socket_options(void) {
+	int yes = 1;
+	if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+		return SOCKET_FAILURE;
 	int flags = fcntl(_sockfd, F_GETFL, 0);
 	if (flags == -1)
 		return SOCKET_FAILURE;

@@ -97,7 +97,7 @@ int	TCPServer::wait(void) {
 		}
 		if (st == CLIENT_DISCONNECTED) {
 			log_info("Client disconnected");
-			close_fd("Client disconnected", *it);
+			close_fd("Client disconnected ", *it);
 		}
 		else if (st == EXECVE_FAILURE) {
 			log_error("FATAL ERROR : Failed execve");
