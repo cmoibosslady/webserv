@@ -76,10 +76,10 @@ void	ClientConnection::setLocationConfig() {
 			break;
 		else {
 			if (last_slash == uri.size() - 1) {
-				uri.erase(last_slash + 1);		
+				uri.erase(last_slash);		
 			}
 			else
-				uri.erase(last_slash);
+				uri.erase(last_slash + 1);
 		}
 	}
 	_location = 0;
