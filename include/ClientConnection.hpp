@@ -23,18 +23,23 @@ class ClientConnection : public Parser, public Response
 
 		bool	operator==(const ClientConnection& other) const;
 
-		int 	getFd() const;
-		int		closeConnection(void);
-		int		getStatus() const;
+		int 					getFd() const;
+		const std::string &		get_method(void) const;
+		const std::string &		get_uri(void) const;
+		const std::map<std::string, std::string> &	get_headers(void) const;
+		const std::string &		get_body(void) const;
+		int						closeConnection(void);
+		int						getStatus() const;
 
 		void	updateLastActivity(void);
 		void	setServerConfig(const serverConfig * config);
 		void	setLocationConfig();
 
 		const cgiConfig *	needs_cgi(void) const;
+		exit_status			launch_execve(void);
 
 		client_status		processTransmit(void);
-		client_status		prepareResponse(void);
+		client_status		prepareResponse(const int http_code = 0);
 		client_status		send_response(void);
 
 	private:

@@ -1,5 +1,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fstream>
+#include <sstream>
 #include "ClientConnection.hpp"
 #include "ft_mem.hpp"
 #include "main.hpp"
@@ -37,6 +39,22 @@ bool	ClientConnection::operator==(const ClientConnection& other) const {
 
 int	ClientConnection::getFd(void) const {
 	return _fd;
+}
+
+const std::string &	ClientConnection::get_method(void) const {
+	return Parser::get_method();
+}
+
+const std::string &	ClientConnection::get_uri(void) const {
+	return Parser::get_uri();
+}
+
+const std::map<std::string, std::string> &	ClientConnection::get_headers(void) const {
+	return Parser::get_headers();
+}
+
+const std::string &	ClientConnection::get_body(void) const {
+	return Parser::get_body();
 }
 
 int	ClientConnection::closeConnection(void) {
@@ -141,11 +159,14 @@ client_status	ClientConnection::processTransmit(void) {
 	return _status;
 }
 
-client_status	ClientConnection::prepareResponse() {
-	log_info("Preparing response");
-	_buffer = "1. 2. 3. 4. 5. 6. 7.";
-	build_response(_buffer);
-	return SENDING_RESPONSE;
+client_status	ClientConnection::prepareResponse(const int status_code) {
+	if (status_code == 0) {
+		log_info("Preparing response");
+		_buffer = "1. 2. 3. 4. 5. 6. 7.";
+	}
+	build_response(_buffer, status_code);
+	_status = SENDING_RESPONSE;
+	return _status;
 }
 
 client_status	ClientConnection::send_response(void) {

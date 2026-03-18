@@ -190,17 +190,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		_client_ptr->setLocationConfig();
 		_cgi_ptr = _client_ptr->needs_cgi();
 		if (_cgi_ptr != NULL) {
-			// CGIControler cgi;
-			// cgi.initiate_cgi(_client_ptr); // Should activate CGI/fork + add to poll
-			// if (fork_and_exec_cgi(cgi) == EXECVE_FAILURE) {
-				// log_error("Failed to fork and exec CGI");
-				// return EXECVE_FAILURE;
-			// }
-			// _cgis.push_back(cgi);
-			// _poller.add(cgi.getPipeReadEnd(), POLLIN);
-			// if (cgi.need_input() == true)
-				// _poller.add(cgi.getPipeWriteEnd(), POLLOUT);
-			log_info("CGI detected");
+			log_info("CGI detected");	
+			prepare_cgi_process();
 		}
 		status = _client_ptr->prepareResponse();
 		if (status == SENDING_RESPONSE) {
@@ -210,3 +201,31 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	return SUCCESS;
 }
 
+exit_status	TCPServer::prepare_cgi_process(void) {
+	CGIControler cgi;
+	if (cgi.initiate_cgi(_client_ptr, _cgi_ptr) == PIPE_FAILURE) {
+		log_error("Failed to initiate CGI process");
+		_client_ptr->prepareResponse(500);
+		_poller.modify(_client_ptr->getFd(), POLLOUT);
+		return PIPE_FAILURE;
+	}
+	pid_t cgi_pid = cgi.fork_dup_op();
+	if (cgi_pid == -1) {
+		log_error("Failed to fork CGI process");
+		_client_ptr->prepareResponse(500);
+		_poller.modify(_client_ptr->getFd(), POLLOUT);
+		return FORK_FAILURE;
+	}
+	if (cgi_pid == 0) { // child process
+		cgi.execute_cgi();
+		return EXECVE_FAILURE;
+	}
+	else { // parent process
+		if (cgi.get_input_w_pipe() != -1) {
+			_poller.add(cgi.get_input_w_pipe(), POLLOUT);
+		}
+		_poller.add(cgi.get_output_r_pipe(), POLLIN);
+		log_info("CGI process initiated successfully");
+	}
+	return SUCCESS;
+}

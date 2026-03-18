@@ -31,6 +31,8 @@ enum client_status {
 };
 
 enum exit_status {
+	PIPE_FAILURE,
+	FORK_FAILURE,
 	EXECVE_FAILURE,
 	CLIENT_DISCONNECTED,
 	SUCCESS

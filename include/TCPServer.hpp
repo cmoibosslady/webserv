@@ -32,6 +32,8 @@ class TCPServer {
 		exit_status				handle_client_event(int fd);
 
 		bool			check_for_cgi(void);
+
+		exit_status 	prepare_cgi_process(void);
 		exit_status		activate_cgi(void);
 		exit_status		handle_cgi_event(int fd);
 		exit_status		fork_and_exec_cgi(CGIControler &cgi);

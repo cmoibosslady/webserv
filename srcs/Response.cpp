@@ -1,7 +1,69 @@
 #include <sstream>
 #include <sys/socket.h>
+#include <cctype>
 #include "main.tpp"
 #include "Response.hpp"
+
+static const char *	get_reason_phrase(int http_code) {
+	switch (http_code) {
+		case 100: return "Continue";
+		case 101: return "Switching Protocols";
+		case 200: return "OK";
+		case 201: return "Created";
+		case 202: return "Accepted";
+		case 204: return "No Content";
+		case 301: return "Moved Permanently";
+		case 302: return "Found";
+		case 303: return "See Other";
+		case 304: return "Not Modified";
+		case 307: return "Temporary Redirect";
+		case 308: return "Permanent Redirect";
+		case 400: return "Bad Request";
+		case 401: return "Unauthorized";
+		case 403: return "Forbidden";
+		case 404: return "Not Found";
+		case 405: return "Method Not Allowed";
+		case 408: return "Request Timeout";
+		case 409: return "Conflict";
+		case 411: return "Length Required";
+		case 413: return "Payload Too Large";
+		case 414: return "URI Too Long";
+		case 415: return "Unsupported Media Type";
+		case 418: return "I'm a teapot";
+		case 429: return "Too Many Requests";
+		case 500: return "Internal Server Error";
+		case 501: return "Not Implemented";
+		case 502: return "Bad Gateway";
+		case 503: return "Service Unavailable";
+		case 504: return "Gateway Timeout";
+		case 505: return "HTTP Version Not Supported";
+		default: return "Unknown Status";
+	}
+}
+
+static bool	status_has_body(int http_code) {
+	if ((http_code >= 100 && http_code < 200) || http_code == 204 || http_code == 304)
+		return false;
+	return true;
+}
+
+static std::string	to_lower_copy(const std::string & input) {
+	std::string out = input;
+	for (std::string::size_type i = 0; i < out.size(); ++i)
+		out[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(out[i])));
+	return out;
+}
+
+static std::string	build_default_error_page(int http_code) {
+	std::stringstream html;
+	html << "<!DOCTYPE html>\n"
+		<< "<html><head><meta charset=\"UTF-8\"><title>"
+		<< http_code << " " << get_reason_phrase(http_code)
+		<< "</title></head><body><h1>"
+		<< http_code << " " << get_reason_phrase(http_code)
+		<< "</h1></body></html>\n";
+	return html.str();
+}
 
 Response::Response(void) {
 	// log_info("Response constructor called");
@@ -31,17 +93,48 @@ void	Response::clean_fd(void) {
 	_fd = -1;
 }
 
-bool Response::build_response(const std::string content) {
-	// This function should build the response string based on the parsed request and the server's configuration.
-	// For now, we will just set a simple response for testing purposes.
+bool Response::build_response(const std::string content, const int http_code, const std::string content_type) {
+	const std::string empty_body;
+	std::string body = status_has_body(http_code) ? content : empty_body;
+	std::string type = content_type;
+
+	if (status_has_body(http_code) && body.empty() && http_code >= 400 && http_code <= 599) {
+		body = build_default_error_page(http_code);
+		type = "text/html; charset=utf-8";
+	}
+
 	std::stringstream ss;
-	ss << "HTTP/1.1 200 OK\r\n" 
-		<< "Content-Type: text/plain\r\n" 
-		<< "Content-Length: " << content.size() << "\r\n"
-		<< "\r\n" << content
-		<< "\r\n";
+	ss << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n"
+		<< "Content-Type: " << type << "\r\n"
+		<< "Content-Length: " << body.size() << "\r\n"
+		<< "Connection: close\r\n"
+		<< "\r\n"
+		<< body;
 	_response = ss.str();
 	return true;
+}
+
+std::string	Response::get_content_type(const std::string & file_path) const {
+	std::string::size_type dot = file_path.find_last_of('.');
+	if (dot == std::string::npos)
+		return "application/octet-stream";
+
+	std::string ext = to_lower_copy(file_path.substr(dot));
+	if (ext == ".html" || ext == ".htm") return "text/html; charset=utf-8";
+	if (ext == ".css") return "text/css; charset=utf-8";
+	if (ext == ".js") return "application/javascript; charset=utf-8";
+	if (ext == ".json") return "application/json; charset=utf-8";
+	if (ext == ".txt") return "text/plain; charset=utf-8";
+	if (ext == ".xml") return "application/xml; charset=utf-8";
+	if (ext == ".svg") return "image/svg+xml";
+	if (ext == ".png") return "image/png";
+	if (ext == ".jpg" || ext == ".jpeg") return "image/jpeg";
+	if (ext == ".gif") return "image/gif";
+	if (ext == ".ico") return "image/x-icon";
+	if (ext == ".webp") return "image/webp";
+	if (ext == ".pdf") return "application/pdf";
+	if (ext == ".wasm") return "application/wasm";
+	return "application/octet-stream";
 }
 
 client_status Response::send_response(void) {
