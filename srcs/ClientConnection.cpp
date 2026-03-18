@@ -87,15 +87,23 @@ void	ClientConnection::setLocationConfig() {
 
 
 const cgiConfig *	ClientConnection::needs_cgi(void) const {
-	if (!_location || !_location->cgi_configs.empty())
+	if (!_location || _location->cgi_configs.empty()) {
+		log_debug<std::string>("No cgi config found for URI: ", get_uri());
 		return NULL;
-	if (get_uri().find('.') == std::string::npos)
+	}
+	if (get_uri().find('.') == std::string::npos) {
+		log_debug<std::string>("No CGI dot extension founded for URI: ", get_uri());
 		return NULL;
+	}
 	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'));
+	log_debug<std::string>("URI extension: ", uri_extension);
 	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {
+		log_debug<std::string>("Checking CGI extension: ", it->extension);
 		if (it->extension == uri_extension)
 			return &(*it);
 	}
+	log_debug<std::string>("No CGI needed for URI: ", get_uri());
+	
 	return NULL;
 }
 
