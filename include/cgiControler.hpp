@@ -3,21 +3,24 @@
 
 # include <vector>
 
-# include "ClientConnection.hpp"
+# include "config.hpp"
 # include "main.hpp"
+
+class	ClientConnection;
 
 class CGIControler {
 	public:
-		CGIControler(void);
+		CGIControler(ClientConnection & client);
 		CGIControler(const CGIControler & other);
 		CGIControler & operator=(const CGIControler & other);
 		~CGIControler(void);
 
-		exit_status		initiate_cgi(const ClientConnection *client, const cgiConfig& cgi);
+		exit_status		initiate_cgi(const cgiConfig& cgi);
 		pid_t			fork_dup_op(void);
 		void			build_envp(const cgiConfig& cgi);
 		exit_status		execute_cgi() const;
 
+		ClientConnection &					get_client_ptr(void) const;
 		int									get_input_w_pipe(void) const;
 		int									get_output_r_pipe(void) const;
 		const std::vector<std::string> &	get_envp(void) const;
@@ -26,7 +29,9 @@ class CGIControler {
 		std::string							get_exec_path(void) const;
 
 	private:
-		const ClientConnection	*_client_ptr;
+		CGIControler(void);
+		ClientConnection &	_client_snapshot;
+
 		int		_input_pipe[2];
 		int		_output_pipe[2];
 		time_t	_start_time;

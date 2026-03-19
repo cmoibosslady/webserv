@@ -214,8 +214,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 }
 
 exit_status	TCPServer::prepare_cgi_process(void) {
-	CGIControler cgi;
-	if (cgi.initiate_cgi(_client_ptr, *_cgi_config_ptr) == PIPE_FAILURE) {
+	CGIControler cgi(*_client_ptr);
+	if (cgi.initiate_cgi(*_cgi_config_ptr) == PIPE_FAILURE) {
 		log_error("Failed to initiate CGI process");
 		_client_ptr->prepareResponse(500);
 		_poller.modify(_client_ptr->getFd(), POLLOUT);
@@ -251,5 +251,6 @@ exit_status	TCPServer::handle_cgi_events(const int fd) {
 		kill(_cgi_control_ptr->get_child_pid(), SIGKILL);
 		_poller.remove(_cgi_control_ptr->get_input_w_pipe());
 		_poller.remove(_cgi_control_ptr->get_output_r_pipe());
+		_cgi_control_ptr->get_client_ptr().prepareResponse(504);
 	}
 }
