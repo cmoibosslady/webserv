@@ -143,6 +143,7 @@ void	CGIControler::execute_cgi(void) const {
 	// need to chdir to the file to execute 
 	// create argv with executable + file name to execute + NULL
 	// launch execve
+	std::string dir_path = _client_ptr->get_uri();
 	std::vector<char *> envp_cstr;
 	envp_cstr.reserve(_envp.size() + 1);
 	for (size_t i = 0; i < _envp.size(); ++i) {
