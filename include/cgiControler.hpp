@@ -13,25 +13,30 @@ class CGIControler {
 		CGIControler & operator=(const CGIControler & other);
 		~CGIControler(void);
 
-		exit_status	initiate_cgi(const ClientConnection *client, const cgiConfig *cgi);
-		pid_t		fork_dup_op(void);
-		void		build_envp(const cgiConfig *cgi);
-		void		execute_cgi() const;
+		exit_status		initiate_cgi(const ClientConnection *client, const cgiConfig& cgi);
+		pid_t			fork_dup_op(void);
+		void			build_envp(const cgiConfig& cgi);
+		exit_status		execute_cgi() const;
 
 		int									get_input_w_pipe(void) const;
 		int									get_output_r_pipe(void) const;
 		const std::vector<std::string> &	get_envp(void) const;
 		time_t								get_start_time(void) const;
+		pid_t								get_child_pid(void) const;
+		std::string							get_exec_path(void) const;
 
 	private:
 		const ClientConnection	*_client_ptr;
 		int		_input_pipe[2];
 		int		_output_pipe[2];
 		time_t	_start_time;
+		pid_t	_child_pid;
 
 		std::string					_exec_path;
+		std::string					_dir_path;
 		std::string					_script_name;
 		std::string					_query_string;
+
 		std::vector<std::string>	_envp;
 };
 

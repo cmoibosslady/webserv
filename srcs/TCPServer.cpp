@@ -89,12 +89,14 @@ int	TCPServer::wait(void) {
 		else if (is_a_client(*it)) {
 			st = handle_client_event(*it);
 		}
-		else {
+		else if (is_a_cgi(*it)) {
 			log_warning<int>("The fd must be a pipe", *it);
-			// st = handle_cgi_events(*it);
-			// if (st == EXECVE_FAILURE) {
-				// log_error("FATAL ERROR : Failed execve");
-				// return EXECVE_FAILURE;
+			st = handle_cgi_event(*it);
+		}
+		else {
+			log_warning<int>("Unknown fd ready: ", *it);
+			log_error("VERY FATAL ERROR...");
+			continue ;
 		}
 		if (st == CLIENT_DISCONNECTED) {
 			log_info("Client disconnected");
@@ -131,6 +133,16 @@ int		TCPServer::is_a_client(int fd) {
 	for (std::vector<ClientConnection>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		if (it->getFd() == fd) {
 			_client_ptr = &(*it);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int	TCPServer::is_a_cgi(const int fd) {
+	for (std::vector<CGIControler>::iterator it = _cgis.begin(); it != _cgis.end(); ++it) {
+		if (it->get_input_w_pipe() == fd || it->get_output_r_pipe() == fd) {
+			_cgi_control_ptr = &(*it);
 			return 1;
 		}
 	}
@@ -188,8 +200,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	else if (status == BUILDING_RESPONSE) {
 		log_info("Building response for client");
 		_client_ptr->setLocationConfig();
-		_cgi_ptr = _client_ptr->needs_cgi();
-		if (_cgi_ptr != NULL) {
+		_cgi_config_ptr = _client_ptr->needs_cgi();
+		if (_cgi_config_ptr != NULL) {
 			log_info("CGI detected");	
 			prepare_cgi_process();
 		}
@@ -203,7 +215,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 
 exit_status	TCPServer::prepare_cgi_process(void) {
 	CGIControler cgi;
-	if (cgi.initiate_cgi(_client_ptr, _cgi_ptr) == PIPE_FAILURE) {
+	if (cgi.initiate_cgi(_client_ptr, *_cgi_config_ptr) == PIPE_FAILURE) {
 		log_error("Failed to initiate CGI process");
 		_client_ptr->prepareResponse(500);
 		_poller.modify(_client_ptr->getFd(), POLLOUT);
@@ -225,7 +237,19 @@ exit_status	TCPServer::prepare_cgi_process(void) {
 			_poller.add(cgi.get_input_w_pipe(), POLLOUT);
 		}
 		_poller.add(cgi.get_output_r_pipe(), POLLIN);
+		_cgis.push_back(cgi);
 		log_info("CGI process initiated successfully");
 	}
 	return SUCCESS;
+}
+
+
+exit_status	TCPServer::handle_cgi_events(const int fd) {
+	time_t start = _cgi_control_ptr->get_start_time();
+	if (TIMEOUT - start <= 0) {
+		log_warning<std::string>("CGI process timed out: ", _cgi_control_ptr->get_exec_path());
+		kill(_cgi_control_ptr->get_child_pid(), SIGKILL);
+		_poller.remove(_cgi_control_ptr->get_input_w_pipe());
+		_poller.remove(_cgi_control_ptr->get_output_r_pipe());
+	}
 }

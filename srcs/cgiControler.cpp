@@ -1,6 +1,7 @@
-#include <unistd.h>
-#include <sstream>
 #include <cctype>
+#include <csignal>
+#include <sstream>
+#include <unistd.h>
 #include "cgiControler.hpp"
 #include "main.tpp"
 
@@ -48,7 +49,7 @@ CGIControler::~CGIControler(void) {
 	// log_info("CGIControler destructor called");
 }
 
-exit_status CGIControler::initiate_cgi(const ClientConnection *client, const cgiConfig *cgi) {
+exit_status CGIControler::initiate_cgi(const ClientConnection *client, const cgiConfig& cgi) {
 	this->_client_ptr = client;
 	build_envp(cgi);
 	if (_client_ptr->get_method() == "POST") {
@@ -67,6 +68,7 @@ exit_status CGIControler::initiate_cgi(const ClientConnection *client, const cgi
 pid_t	CGIControler::fork_dup_op(void) {
 	pid_t pid = fork();
 	if (pid == 0) {
+		signal(SIGINT, SIG_DFL);
 		if (_client_ptr->get_method() == "POST") {
 			dup2(_input_pipe[0], STDIN_FILENO);
 			close(_input_pipe[1]);
@@ -80,11 +82,12 @@ pid_t	CGIControler::fork_dup_op(void) {
 		}
 		close(_output_pipe[1]);
 		this->_start_time = time(NULL);
+		_child_pid = pid;
 	}
 	return pid;
 }
 
-void	CGIControler::build_envp(const cgiConfig *cgi) {
+void	CGIControler::build_envp(const cgiConfig& cgi) {
 	_envp.clear();
 	_envp.reserve(14);
 	if (_client_ptr == NULL)
@@ -99,6 +102,7 @@ void	CGIControler::build_envp(const cgiConfig *cgi) {
 		_script_name = uri.substr(0, qpos);
 		_query_string = uri.substr(qpos + 1);
 	}
+	_dir_path = _script_name.substr(0, _script_name.find_last_of('/'));
 
 	const std::map<std::string, std::string> & headers = _client_ptr->get_headers();
 	std::string host;
@@ -129,8 +133,8 @@ void	CGIControler::build_envp(const cgiConfig *cgi) {
 	push_env(_envp, "REMOTE_ADDR", "127.0.0.1");
 	push_env(_envp, "SERVER_SOFTWARE", "webserv/1.0");
 
-	if (cgi != NULL && !cgi->script_path.empty())
-		push_env(_envp, "SCRIPT_FILENAME", cgi->script_path);
+	if (!cgi.script_path.empty())
+		push_env(_envp, "SCRIPT_FILENAME", cgi.script_path);
 	if (!host.empty())
 		push_env(_envp, "HTTP_HOST", host);
 	if (!content_type.empty())
@@ -139,11 +143,12 @@ void	CGIControler::build_envp(const cgiConfig *cgi) {
 		push_env(_envp, "CONTENT_LENGTH", content_length);
 }
 
-void	CGIControler::execute_cgi(void) const {
-	// need to chdir to the file to execute 
-	// create argv with executable + file name to execute + NULL
-	// launch execve
-	std::string dir_path = _client_ptr->get_uri();
+exit_status	CGIControler::execute_cgi(void) const {
+	if (chdir(_dir_path.c_str()) == -1) {
+		log_error("Failed to change directory to " + _dir_path);
+		return CHDIR_FAILURE;
+	}
+
 	std::vector<char *> envp_cstr;
 	envp_cstr.reserve(_envp.size() + 1);
 	for (size_t i = 0; i < _envp.size(); ++i) {
@@ -151,7 +156,13 @@ void	CGIControler::execute_cgi(void) const {
 	}
 	envp_cstr.push_back(NULL);
 
-	execve(_exec_path.c_str(), NULL, envp_cstr.data());
+	std::vector<char *> argv;
+	argv.push_back(const_cast<char *>(_exec_path.c_str()));
+	argv.push_back(const_cast<char *>(_script_name.c_str()));
+	argv.push_back(NULL);
+
+	execve(_exec_path.c_str(), argv.data(), envp_cstr.data());
+	return EXECVE_FAILURE;
 }
 
 int CGIControler::get_input_w_pipe(void) const {
@@ -168,4 +179,12 @@ time_t CGIControler::get_start_time(void) const {
 
 const std::vector<std::string> &	CGIControler::get_envp(void) const {
 	return this->_envp;
+}
+
+pid_t	CGIControler::get_child_pid(void) const {
+	return this->_child_pid;
+}
+
+std::string	CGIControler::get_exec_path(void) const {
+	return this->_exec_path;
 }

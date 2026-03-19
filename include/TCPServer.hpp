@@ -26,6 +26,7 @@ class TCPServer {
 		void			close_fd(std::string msg, int fd);
 		int				is_a_socket(int fd);
 		int				is_a_client(int fd);
+		int				is_a_cgi(const int fd);
 
 		int						add_new_client();
 		const serverConfig *	find_server_config(int fd);
@@ -43,15 +44,16 @@ class TCPServer {
 		Poller							_poller;
 		std::vector<Socket>				_sockets;
 		std::vector<ClientConnection>	_clients;
-		// std::vector<CGIControler>		_cgis;
-		// LATER
+		std::vector<CGIControler>		_cgis;
+
 		static bool						_close_server;
 
 	private:
 		// to reduce looping on struct
 		Socket				*_socket_ptr;
 		ClientConnection	*_client_ptr;
-		const cgiConfig		*_cgi_ptr;
+		const CGIControler	*_cgi_control_ptr;
+		const cgiConfig		*_cgi_config_ptr;
 };
 
 #endif
