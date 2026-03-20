@@ -37,7 +37,7 @@ TCPServer::~TCPServer(void) {
 	for (std::vector<ClientConnection>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		it->closeConnection();
 	}
-	log_info("TCPServer destroyed");
+	// log_info("TCPServer destroyed");
 }
 
 void	TCPServer::signal_handler(int signum) {
@@ -90,7 +90,7 @@ int	TCPServer::wait(void) {
 			st = handle_client_event(*it);
 		}
 		else if (is_a_cgi(*it)) {
-			log_warning<int>("The fd must be a pipe", *it);
+			log_warning<int>("The fd must be a pipe: ", *it);
 			st = handle_cgi_event(*it);
 		}
 		else {
@@ -203,7 +203,10 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		_cgi_config_ptr = _client_ptr->needs_cgi();
 		if (_cgi_config_ptr != NULL) {
 			log_info("CGI detected");	
-			prepare_cgi_process(fd);
+			if (prepare_cgi_process(fd) != SUCCESS) {;
+				log_error("Failed to prepare CGI process. Child must quit");
+				return EXECVE_FAILURE;
+			}
 		}
 		status = _client_ptr->prepareResponse();
 		if (status == SENDING_RESPONSE) {
@@ -230,8 +233,7 @@ exit_status	TCPServer::prepare_cgi_process(const int fd) {
 	}
 	if (cgi_pid == 0) { // child process
 		cgi.build_envp(*_client_ptr, *_cgi_config_ptr);
-		cgi.execute_cgi();
-		return EXECVE_FAILURE;
+		return cgi.execute_cgi();
 	}
 	else { // parent process
 		if (cgi.get_input_w_pipe() != -1) {
@@ -244,11 +246,11 @@ exit_status	TCPServer::prepare_cgi_process(const int fd) {
 	return SUCCESS;
 }
 
-
 exit_status	TCPServer::handle_cgi_event(int fd) {
 	is_a_client(_cgi_control_ptr->get_client_fd());
 	time_t start = _cgi_control_ptr->get_start_time();
-	if (TIMEOUT - start <= 0) {
+	time_t current = std::time(NULL);
+	if (current - start >= TIMEOUT) {
 		log_warning<std::string>("CGI process timed out: ", _cgi_control_ptr->get_exec_path());
 		kill_cgi(504);
 	}
@@ -261,6 +263,7 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 		log_info("CGI process finished: " + _cgi_control_ptr->get_exec_path());
 		_poller.remove(fd);
 		if (fd == _cgi_control_ptr->get_output_r_pipe()) {
+			log_info("CGI process output pipe closed: " + _cgi_control_ptr->get_exec_path());
 			_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
 			_client_ptr->prepareResponse();
 			_poller.modify(_client_ptr->getFd(), POLLOUT);

@@ -24,7 +24,7 @@ config & config::operator=(const config & other) {
 }
 
 config::~config(void) {
-	log_info<std::string>("config destructor called");
+	// log_info<std::string>("config destructor called");
 }
 
 config::config(const std::string & filename) {

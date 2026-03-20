@@ -20,7 +20,7 @@ Poller&	Poller::operator=(const Poller & other) {
 }
 
 Poller::~Poller(void) {
-	log_info("Poller instance destroyed");
+	// log_info("Poller instance destroyed");
 }
 
 poll_status Poller::add(int fd, short events) {

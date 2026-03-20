@@ -22,6 +22,8 @@ class CGIControler {
 		bool			feed_cgi_process(void);
 		void			cgi_received_data(void);
 
+		void			failed_execve_close(void) const;
+
 		int									get_client_fd(void) const;
 		int									get_input_w_pipe(void) const;
 		int									get_output_r_pipe(void) const;

@@ -73,12 +73,14 @@ pid_t	CGIControler::fork_dup_op(const ClientConnection & client) {
 	_child_pid = fork();
 	if (_child_pid == 0) {
 		signal(SIGINT, SIG_DFL);
+		close(_output_pipe[0]);
 		if (client.get_method() == "POST") {
-			dup2(_input_pipe[0], STDIN_FILENO);
 			close(_input_pipe[1]);
+			dup2(_input_pipe[0], STDIN_FILENO);
+			close(_input_pipe[0]);
 		}
 		dup2(_output_pipe[1], STDOUT_FILENO);
-		close(_output_pipe[0]);
+		close(_output_pipe[1]);
 	}
 	else if (_child_pid > 0) {
 		if (client.get_method() == "POST") {
@@ -149,6 +151,7 @@ void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& 
 exit_status	CGIControler::execute_cgi(void) const {
 	if (chdir(_dir_path.c_str()) == -1) {
 		log_error("Failed to change directory to " + _dir_path);
+		close(STDOUT_FILENO);
 		return CHDIR_FAILURE;
 	}
 
@@ -160,7 +163,7 @@ exit_status	CGIControler::execute_cgi(void) const {
 	envp_cstr.push_back(NULL);
 
 	std::vector<char *> argv;
-	argv.push_back(const_cast<char *>(_exec_path.c_str()));
+	argv.push_back(const_cast<char *>(_exec_path.c_str())); //hating this
 	argv.push_back(const_cast<char *>(_script_name.c_str()));
 	argv.push_back(NULL);
 
