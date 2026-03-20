@@ -112,6 +112,7 @@ void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& 
 
 	const std::string method = client.get_method();
 	const std::string uri = client.get_uri();
+	log_error("Building CGI environment for URI: " + uri);
 	std::string::size_type qpos = uri.find('?');
 	if (qpos == std::string::npos)
 		_script_name = uri;
@@ -120,6 +121,9 @@ void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& 
 		_query_string = uri.substr(qpos + 1);
 	}
 	_dir_path = _script_name.substr(0, _script_name.find_last_of('/'));
+	if (_dir_path.empty())
+		_dir_path = ".";
+	_script_name.erase(0);
 
 	const std::map<std::string, std::string> & headers = client.get_headers();
 	std::string host;
@@ -170,12 +174,12 @@ exit_status	CGIControler::execute_cgi(void) const {
 	std::vector<char *> envp_cstr;
 	envp_cstr.reserve(_envp.size() + 1);
 	for (size_t i = 0; i < _envp.size(); ++i) {
-		envp_cstr.push_back(const_cast<char *>(_envp[i].c_str()));
+		envp_cstr.push_back(const_cast<char *>(_envp[i].c_str())); // seems so dirty
 	}
 	envp_cstr.push_back(NULL);
 
 	std::vector<char *> argv;
-	argv.push_back(const_cast<char *>(_exec_path.c_str())); //hating this
+	argv.push_back(const_cast<char *>(_exec_path.c_str())); // hating this
 	argv.push_back(const_cast<char *>(_script_name.c_str()));
 	argv.push_back(NULL);
 

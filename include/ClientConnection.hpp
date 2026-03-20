@@ -31,10 +31,11 @@ class ClientConnection : public Parser, public Response
 		int						closeConnection(void);
 		int						getStatus() const;
 
-		void	updateLastActivity(void);
-		void	setServerConfig(const serverConfig * config);
-		void	setLocationConfig();
-		void	setBuffer(const std::string cgi_answer);
+		void		updateLastActivity(void);
+		void		setServerConfig(const serverConfig * config);
+		void		setLocationConfig();
+		std::string	getLocationRoot() const;
+		void		setBuffer(const std::string cgi_answer);
 
 		const cgiConfig *	needs_cgi(void) const;
 		exit_status			launch_execve(void);

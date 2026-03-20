@@ -103,6 +103,12 @@ void	ClientConnection::setLocationConfig() {
 	_location = 0;
 }
 
+std::string	ClientConnection::getLocationRoot() const {
+	if (_location && !_location->root.empty())
+		return _location->root;
+	return "";
+}
+
 void	ClientConnection::setBuffer(const std::string cgi_answer) {
 	if (!cgi_answer.empty()) {
 		_buffer = cgi_answer;
