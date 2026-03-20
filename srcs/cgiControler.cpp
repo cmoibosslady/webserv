@@ -112,18 +112,21 @@ void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& 
 
 	const std::string method = client.get_method();
 	const std::string uri = client.get_uri();
-	log_error("Building CGI environment for URI: " + uri);
+	const std::string root = client.getLocationRoot();
+	// log_error("Building CGI environment for URI: " + uri);
 	std::string::size_type qpos = uri.find('?');
 	if (qpos == std::string::npos)
-		_script_name = uri;
+		_script_name = uri.substr(1);
 	else {
-		_script_name = uri.substr(0, qpos);
+		_script_name = uri.substr(1, qpos);
 		_query_string = uri.substr(qpos + 1);
 	}
-	_dir_path = _script_name.substr(0, _script_name.find_last_of('/'));
+	if (_script_name.find_last_of('/') != std::string::npos)
+		_dir_path = root + _script_name.substr(0, _script_name.find_last_of('/'));
+	else
+		_dir_path = root;
 	if (_dir_path.empty())
 		_dir_path = ".";
-	_script_name.erase(0);
 
 	const std::map<std::string, std::string> & headers = client.get_headers();
 	std::string host;
