@@ -201,6 +201,10 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	else if (status == BUILDING_RESPONSE) {
 		log_info("Building response for client");
 		_client_ptr->setLocationConfig();
+		// check if redirection is needed
+		// check if uri exist
+		// check if it's alllowed method
+		// maybe all of this in Response and just the status here
 		_cgi_config_ptr = _client_ptr->needs_cgi();
 		if (_cgi_config_ptr != NULL) {
 			log_info("CGI detected");	
