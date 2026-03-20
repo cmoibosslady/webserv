@@ -93,8 +93,9 @@ void	Response::clean_fd(void) {
 	_fd = -1;
 }
 
-bool Response::build_response(const std::string & content, const int http_code, const std::string content_type) {
+bool Response::build_response(const std::string content, const int http_code, const std::string content_type) {
 	const std::string empty_body;
+	log_debug<int>("Building response with HTTP code ", http_code);
 	std::string body = status_has_body(http_code) ? content : empty_body;
 	std::string type = content_type;
 

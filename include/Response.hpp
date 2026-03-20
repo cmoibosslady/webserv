@@ -18,7 +18,7 @@ class Response {
 		void				clean_fd(void);
 
 	protected:
-		bool				build_response(const std::string & content, const int http_code, const std::string content_type = "text/plain; charset=utf-8");
+		bool				build_response(const std::string content, const int http_code, const std::string content_type = "text/plain; charset=utf-8");
 		std::string			get_content_type(const std::string & file_path) const;
 		client_status		send_response(void);
 

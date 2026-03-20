@@ -45,8 +45,16 @@ CGIControler & CGIControler::operator=(const CGIControler & other) {
 	this->_output_pipe[0] = other._output_pipe[0];
 	this->_output_pipe[1] = other._output_pipe[1];
 	this->_start_time = other._start_time;
+	this->_child_pid = other._child_pid;
+
 	this->_exec_path = other._exec_path;
+	this->_dir_path = other._dir_path;
+	this->_script_name = other._script_name;
+	this->_query_string = other._query_string;
 	this->_envp = other._envp;
+	
+	this->_sent_data = other._sent_data;
+	this->_received_data = other._received_data;
 	return *this;
 }
 

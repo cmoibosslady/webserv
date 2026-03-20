@@ -70,7 +70,7 @@ int	TCPServer::init(void) {
 int	TCPServer::wait(void) {
 	std::vector<int> ready_fds;
 	exit_status st;
-	log_info("Waiting for events...");
+	// log_info("Waiting for events...");
 	_poller.wait(-1, ready_fds);
 	if (_close_server) {
 			log_info("Server is shutting down, ignoring events");
@@ -91,7 +91,7 @@ int	TCPServer::wait(void) {
 			st = handle_client_event(*it);
 		}
 		else if (is_a_cgi(*it)) {
-			log_warning<int>("The fd must be a pipe: ", *it);
+			// log_warning<int>("The fd must be a pipe: ", *it);
 			st = handle_cgi_event(*it);
 		}
 		else {
@@ -208,6 +208,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 				log_error("Failed to prepare CGI process. Child must quit");
 				return EXECVE_FAILURE;
 			}
+			return SUCCESS;
 		}
 		status = _client_ptr->prepareResponse();
 		if (status == SENDING_RESPONSE) {
@@ -261,17 +262,18 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 		kill_cgi(500);
 	}
 	if (events & POLLHUP) {
-		log_info("CGI process finished: " + _cgi_control_ptr->get_exec_path());
-		_poller.remove(fd);
 		if (fd == _cgi_control_ptr->get_output_r_pipe()) {
-			log_info("CGI process output pipe closed: " + _cgi_control_ptr->get_exec_path());
-			_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
-			int exit_status = 0;
-			waitpid(_cgi_control_ptr->get_child_pid(), &exit_status, WNOHANG);
+			int exit_status;
+			if (waitpid(_cgi_control_ptr->get_child_pid(), &exit_status, WNOHANG) != _cgi_control_ptr->get_child_pid()) {
+				return SUCCESS; // Let's wait for cgi process to quit to see error code
+			}
 			if (WIFEXITED(exit_status)) {
 				exit_status = WEXITSTATUS(exit_status);
 			}
-			log_debug<int>("CGI process exit status: ", exit_status);
+			if (exit_status == 0) // Exit was correct we can read the output of the CGI
+				_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
+			else 
+				exit_status = 500; // If CGI process exit with error code, we send 500 to client
 			_client_ptr->prepareResponse(exit_status);
 			_poller.modify(_client_ptr->getFd(), POLLOUT);
 			close(fd);
@@ -282,6 +284,7 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 			// The input pipe should only be close by server when all data transmit. 
 			// If this happens: this is an error -> so kill cgi and send 500 to client
 		}
+		_poller.remove(fd);
 	}
 	else if (events & POLLIN) {
 		_cgi_control_ptr->cgi_received_data();
