@@ -79,7 +79,7 @@ void	ClientConnection::setLocationConfig() {
 	if (!_server)
 		return;
 	log_debug<int>("Server port: ", _server->port);
-	std::string uri = get_uri();
+	std::string uri = get_uri().substr(0, get_uri().find('?'));
 	while (!uri.empty()) {
 		log_debug<std::string>("Trying to match location for URI: ", uri);
 		for (std::set<locationConfig>::const_iterator it = _server->locations.begin(); it != _server->locations.end(); ++it) {
@@ -124,7 +124,7 @@ const cgiConfig *	ClientConnection::needs_cgi(void) const {
 		log_debug<std::string>("No CGI dot extension founded for URI: ", get_uri());
 		return NULL;
 	}
-	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'));
+	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'), get_uri().find_last_of('?') - get_uri().find_last_of('.'));
 	log_debug<std::string>("URI extension: ", uri_extension);
 	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {
 		log_debug<std::string>("Checking CGI extension: ", it->extension);

@@ -118,7 +118,7 @@ void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& 
 	if (qpos == std::string::npos)
 		_script_name = uri.substr(1);
 	else {
-		_script_name = uri.substr(1, qpos);
+		_script_name = uri.substr(1, qpos - 1);
 		_query_string = uri.substr(qpos + 1);
 	}
 	if (_script_name.find_last_of('/') != std::string::npos)
