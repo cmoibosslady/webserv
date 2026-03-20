@@ -34,7 +34,7 @@ class ClientConnection : public Parser, public Response
 		void	updateLastActivity(void);
 		void	setServerConfig(const serverConfig * config);
 		void	setLocationConfig();
-		void	setBuffer(const std::string & cgi_answer);
+		void	setBuffer(const std::string cgi_answer);
 
 		const cgiConfig *	needs_cgi(void) const;
 		exit_status			launch_execve(void);

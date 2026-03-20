@@ -151,7 +151,7 @@ void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& 
 exit_status	CGIControler::execute_cgi(void) const {
 	if (chdir(_dir_path.c_str()) == -1) {
 		log_error("Failed to change directory to " + _dir_path);
-		close(STDOUT_FILENO);
+		failed_execve_close();
 		return CHDIR_FAILURE;
 	}
 
@@ -168,6 +168,7 @@ exit_status	CGIControler::execute_cgi(void) const {
 	argv.push_back(NULL);
 
 	execve(_exec_path.c_str(), argv.data(), envp_cstr.data());
+	failed_execve_close();
 	return EXECVE_FAILURE;
 }
 
@@ -193,6 +194,12 @@ void	CGIControler::cgi_received_data(void) {
 	}
 	buffer[bytes_read] = '\0';
 	_received_data += buffer;
+}
+
+void	CGIControler::failed_execve_close(void) const {
+	if (_input_pipe[0] != -1)
+		close(STDIN_FILENO);
+	close(STDOUT_FILENO);
 }
 
 int	CGIControler::get_client_fd(void) const {

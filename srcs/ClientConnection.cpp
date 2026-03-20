@@ -103,8 +103,10 @@ void	ClientConnection::setLocationConfig() {
 	_location = 0;
 }
 
-void	ClientConnection::setBuffer(const std::string & cgi_answer) {
-	_buffer = cgi_answer;
+void	ClientConnection::setBuffer(const std::string cgi_answer) {
+	if (!cgi_answer.empty()) {
+		_buffer = cgi_answer;
+	}
 }
 
 const cgiConfig *	ClientConnection::needs_cgi(void) const {

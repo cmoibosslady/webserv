@@ -22,5 +22,6 @@ int	main(int argc, char **argv)
 	}
 	while (!server.wait()) {
 	}
-	log_error("Closing server...");
+	log_error("Closing server with error 500...");
+	return 500;
 }

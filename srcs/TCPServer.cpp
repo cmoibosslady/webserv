@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <csignal>
 #include <unistd.h>
+#include <sys/wait.h>
 #include "cgiControler.hpp"
 #include "main.hpp"
 #include "main.tpp"
@@ -265,7 +266,13 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 		if (fd == _cgi_control_ptr->get_output_r_pipe()) {
 			log_info("CGI process output pipe closed: " + _cgi_control_ptr->get_exec_path());
 			_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
-			_client_ptr->prepareResponse();
+			int exit_status = 0;
+			waitpid(_cgi_control_ptr->get_child_pid(), &exit_status, WNOHANG);
+			if (WIFEXITED(exit_status)) {
+				exit_status = WEXITSTATUS(exit_status);
+			}
+			log_debug<int>("CGI process exit status: ", exit_status);
+			_client_ptr->prepareResponse(exit_status);
 			_poller.modify(_client_ptr->getFd(), POLLOUT);
 			close(fd);
 		}
