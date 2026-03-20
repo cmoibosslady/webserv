@@ -276,7 +276,6 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 				exit_status = 500; // If CGI process exit with error code, we send 500 to client
 			_client_ptr->prepareResponse(exit_status);
 			_poller.modify(_client_ptr->getFd(), POLLOUT);
-			_poller.remove(_cgi_control_ptr->get_output_r_pipe());
 			close(fd);
 		}
 		else if (fd == _cgi_control_ptr->get_input_w_pipe()) {
@@ -285,6 +284,7 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 			// The input pipe should only be close by server when all data transmit. 
 			// If this happens: this is an error -> so kill cgi and send 500 to client
 		}
+		_cgis.erase(std::remove(_cgis.begin(), _cgis.end(), *_cgi_control_ptr));
 		_poller.remove(fd);
 	}
 	else if (events & POLLIN) {

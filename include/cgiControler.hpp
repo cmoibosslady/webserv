@@ -15,6 +15,8 @@ class CGIControler {
 		CGIControler & operator=(const CGIControler & other);
 		~CGIControler(void);
 
+		bool			operator==(const CGIControler & other) const;
+
 		exit_status		initiate_cgi(const ClientConnection & client);
 		pid_t			fork_dup_op(const ClientConnection & client);;
 		void			build_envp(const ClientConnection & client, const cgiConfig& cgi);

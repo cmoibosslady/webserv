@@ -62,6 +62,10 @@ CGIControler::~CGIControler(void) {
 	// log_info("CGIControler destructor called");
 }
 
+bool	CGIControler::operator==(const CGIControler & other) const {
+	return this->_child_pid == other._child_pid;
+}
+
 exit_status CGIControler::initiate_cgi(const ClientConnection & client) {
 	if (client.get_method() == "POST") {
 		if (pipe(_input_pipe) == -1) {
@@ -81,12 +85,12 @@ pid_t	CGIControler::fork_dup_op(const ClientConnection & client) {
 	_child_pid = fork();
 	if (_child_pid == 0) {
 		signal(SIGINT, SIG_DFL);
-		close(_output_pipe[0]);
 		if (client.get_method() == "POST") {
 			close(_input_pipe[1]);
 			dup2(_input_pipe[0], STDIN_FILENO);
 			close(_input_pipe[0]);
 		}
+		close(_output_pipe[0]);
 		dup2(_output_pipe[1], STDOUT_FILENO);
 		close(_output_pipe[1]);
 	}
