@@ -34,12 +34,13 @@ class ClientConnection : public Parser, public Response
 		void	updateLastActivity(void);
 		void	setServerConfig(const serverConfig * config);
 		void	setLocationConfig();
+		void	setBuffer(const std::string & cgi_answer);
 
 		const cgiConfig *	needs_cgi(void) const;
 		exit_status			launch_execve(void);
 
 		client_status		processTransmit(void);
-		client_status		prepareResponse(const int http_code = 0);
+		client_status		prepareResponse(int http_status_code = 0, const std::string content = "");
 		client_status		send_response(void);
 
 	private:

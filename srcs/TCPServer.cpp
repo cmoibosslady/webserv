@@ -100,7 +100,7 @@ int	TCPServer::wait(void) {
 		}
 		if (st == CLIENT_DISCONNECTED) {
 			log_info("Client disconnected");
-			close_fd("Client disconnected ", *it);
+			close_client_connection("Client disconnected ", *it);
 		}
 		else if (st == EXECVE_FAILURE) {
 			log_error("FATAL ERROR : Failed execve");
@@ -110,8 +110,8 @@ int	TCPServer::wait(void) {
 	return 0;
 }
 
-void	TCPServer::close_fd(std::string msg, int fd) {
-	log_warning<int>("Closing fd. Cause: " + msg, fd);
+void	TCPServer::close_client_connection(std::string msg, int fd) {
+	log_warning<int>("Closing client connection. Cause: " + msg, fd);
 	_poller.remove(fd);
 	_client_ptr->clean_fd();
 	_clients.erase(std::remove(_clients.begin(), _clients.end(), *_client_ptr)); // Check if does erase correctly the clients from the server vector
@@ -203,7 +203,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		_cgi_config_ptr = _client_ptr->needs_cgi();
 		if (_cgi_config_ptr != NULL) {
 			log_info("CGI detected");	
-			prepare_cgi_process();
+			prepare_cgi_process(fd);
 		}
 		status = _client_ptr->prepareResponse();
 		if (status == SENDING_RESPONSE) {
@@ -213,15 +213,15 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	return SUCCESS;
 }
 
-exit_status	TCPServer::prepare_cgi_process(void) {
-	CGIControler cgi(*_client_ptr);
-	if (cgi.initiate_cgi(*_cgi_config_ptr) == PIPE_FAILURE) {
+exit_status	TCPServer::prepare_cgi_process(const int fd) {
+	CGIControler cgi(fd);
+	if (cgi.initiate_cgi(*_client_ptr) == PIPE_FAILURE) {
 		log_error("Failed to initiate CGI process");
 		_client_ptr->prepareResponse(500);
 		_poller.modify(_client_ptr->getFd(), POLLOUT);
 		return PIPE_FAILURE;
 	}
-	pid_t cgi_pid = cgi.fork_dup_op();
+	pid_t cgi_pid = cgi.fork_dup_op(*_client_ptr);
 	if (cgi_pid == -1) {
 		log_error("Failed to fork CGI process");
 		_client_ptr->prepareResponse(500);
@@ -229,6 +229,7 @@ exit_status	TCPServer::prepare_cgi_process(void) {
 		return FORK_FAILURE;
 	}
 	if (cgi_pid == 0) { // child process
+		cgi.build_envp(*_client_ptr, *_cgi_config_ptr);
 		cgi.execute_cgi();
 		return EXECVE_FAILURE;
 	}
@@ -244,13 +245,49 @@ exit_status	TCPServer::prepare_cgi_process(void) {
 }
 
 
-exit_status	TCPServer::handle_cgi_events(const int fd) {
+exit_status	TCPServer::handle_cgi_event(int fd) {
+	is_a_client(_cgi_control_ptr->get_client_fd());
 	time_t start = _cgi_control_ptr->get_start_time();
 	if (TIMEOUT - start <= 0) {
 		log_warning<std::string>("CGI process timed out: ", _cgi_control_ptr->get_exec_path());
-		kill(_cgi_control_ptr->get_child_pid(), SIGKILL);
-		_poller.remove(_cgi_control_ptr->get_input_w_pipe());
-		_poller.remove(_cgi_control_ptr->get_output_r_pipe());
-		_cgi_control_ptr->get_client_ptr().prepareResponse(504);
+		kill_cgi(504);
 	}
+	short events = _poller.getRevents(fd);
+	if (events & (POLLERR | POLLNVAL)) {
+		log_warning<std::string>("CGI process has error or disconnected: ", _cgi_control_ptr->get_exec_path());
+		kill_cgi(500);
+	}
+	if (events & POLLHUP) {
+		log_info("CGI process finished: " + _cgi_control_ptr->get_exec_path());
+		_poller.remove(fd);
+		if (fd == _cgi_control_ptr->get_output_r_pipe()) {
+			_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
+			_client_ptr->prepareResponse();
+			_poller.modify(_client_ptr->getFd(), POLLOUT);
+			close(fd);
+		}
+		else if (fd == _cgi_control_ptr->get_input_w_pipe()) {
+			close(fd);
+			kill_cgi(500);
+			// The input pipe should only be close by server when all data transmit. 
+			// If this happens: this is an error -> so kill cgi and send 500 to client
+		}
+	}
+	else if (events & POLLIN) {
+		_cgi_control_ptr->cgi_received_data();
+	}
+	else if (events & POLLOUT) {
+		if (_cgi_control_ptr->feed_cgi_process() == true) {
+			_poller.remove(_cgi_control_ptr->get_input_w_pipe());
+			close(_cgi_control_ptr->get_input_w_pipe());
+		}
+	}
+	return SUCCESS;
+}
+
+void	TCPServer::kill_cgi(const int error_code) {
+	kill(_cgi_control_ptr->get_child_pid(), SIGKILL);
+	_poller.remove(_cgi_control_ptr->get_input_w_pipe());
+	_poller.remove(_cgi_control_ptr->get_output_r_pipe());
+	_client_ptr->prepareResponse(error_code);
 }

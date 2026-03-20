@@ -23,7 +23,7 @@ class TCPServer {
 		int			wait(void);
 
 	private:
-		void			close_fd(std::string msg, int fd);
+		void			close_client_connection(std::string msg, int fd);
 		int				is_a_socket(int fd);
 		int				is_a_client(int fd);
 		int				is_a_cgi(const int fd);
@@ -34,10 +34,10 @@ class TCPServer {
 
 		bool			check_for_cgi(void);
 
-		exit_status 	prepare_cgi_process(void);
+		exit_status 	prepare_cgi_process(const int fd);
 		exit_status		activate_cgi(void);
 		exit_status		handle_cgi_event(int fd);
-		exit_status		fork_and_exec_cgi(CGIControler &cgi);
+		void			kill_cgi(const int error_code);
 
 	private:
 		std::set<serverConfig>			_servers;
@@ -52,7 +52,7 @@ class TCPServer {
 		// to reduce looping on struct
 		Socket				*_socket_ptr;
 		ClientConnection	*_client_ptr;
-		const CGIControler	*_cgi_control_ptr;
+		CGIControler		*_cgi_control_ptr;
 		const cgiConfig		*_cgi_config_ptr;
 };
 

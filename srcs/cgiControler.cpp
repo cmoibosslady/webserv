@@ -20,13 +20,11 @@ static void	push_env(std::vector<std::string> & env, const std::string & key, co
 	env.push_back(key + "=" + value);
 }
 
-CGIControler::CGIControler(void): _client_snapshot(*(new ClientConnection(-1))) {
+CGIControler::CGIControler(void): _client_fd(-1) {
 	log_info("CGIControler default private constructor called");
-	delete &_client_snapshot;
-	throw std::runtime_error("CGIControler default constructor should not be called");
 }
 
-CGIControler::CGIControler(ClientConnection& client) :_client_snapshot(client) {
+CGIControler::CGIControler(const int client_fd): _client_fd(client_fd) {
 	// log_info("CGIControler constructor called");
 	_input_pipe[0] = -1;
 	_input_pipe[1] = -1;
@@ -34,13 +32,14 @@ CGIControler::CGIControler(ClientConnection& client) :_client_snapshot(client) {
 	_output_pipe[1] = -1;
 }
 
-CGIControler::CGIControler(const CGIControler & other) : _client_snapshot(other._client_snapshot) {
+CGIControler::CGIControler(const CGIControler & other) {
 	// log_info("CGIControler copy constructor called");
 	*this = other;
 }
 
 CGIControler & CGIControler::operator=(const CGIControler & other) {
 	// log_info("CGIControler assignment operator called");
+	this->_client_fd = other._client_fd;
 	this->_input_pipe[0] = other._input_pipe[0];
 	this->_input_pipe[1] = other._input_pipe[1];
 	this->_output_pipe[0] = other._output_pipe[0];
@@ -55,13 +54,13 @@ CGIControler::~CGIControler(void) {
 	// log_info("CGIControler destructor called");
 }
 
-exit_status CGIControler::initiate_cgi(const cgiConfig& cgi) {
-	build_envp(cgi);
-	if (_client_snapshot.get_method() == "POST") {
+exit_status CGIControler::initiate_cgi(const ClientConnection & client) {
+	if (client.get_method() == "POST") {
 		if (pipe(_input_pipe) == -1) {
 			log_error("Failed to create input pipe for CGI");
 			return PIPE_FAILURE;
 		}
+		_sent_data = client.get_body();
 	}
 	if (pipe(_output_pipe) == -1) {
 		log_error("Failed to create output pipe for CGI");
@@ -70,36 +69,35 @@ exit_status CGIControler::initiate_cgi(const cgiConfig& cgi) {
 	return SUCCESS;
 }
 
-pid_t	CGIControler::fork_dup_op(void) {
-	pid_t pid = fork();
-	if (pid == 0) {
+pid_t	CGIControler::fork_dup_op(const ClientConnection & client) {
+	_child_pid = fork();
+	if (_child_pid == 0) {
 		signal(SIGINT, SIG_DFL);
-		if (_client_snapshot.get_method() == "POST") {
+		if (client.get_method() == "POST") {
 			dup2(_input_pipe[0], STDIN_FILENO);
 			close(_input_pipe[1]);
 		}
 		dup2(_output_pipe[1], STDOUT_FILENO);
 		close(_output_pipe[0]);
 	}
-	else if (pid > 0) {
-		if (_client_snapshot.get_method() == "POST") {
+	else if (_child_pid > 0) {
+		if (client.get_method() == "POST") {
 			close(_input_pipe[0]);
 		}
 		close(_output_pipe[1]);
 		this->_start_time = time(NULL);
-		_child_pid = pid;
 	}
-	return pid;
+	return _child_pid;
 }
 
-void	CGIControler::build_envp(const cgiConfig& cgi) {
+void	CGIControler::build_envp(const ClientConnection & client, const cgiConfig& cgi) {
 	_exec_path = cgi.script_path;
 
 	_envp.clear();
 	_envp.reserve(14);
 
-	const std::string method = _client_snapshot.get_method();
-	const std::string uri = _client_snapshot.get_uri();
+	const std::string method = client.get_method();
+	const std::string uri = client.get_uri();
 	std::string::size_type qpos = uri.find('?');
 	if (qpos == std::string::npos)
 		_script_name = uri;
@@ -109,7 +107,7 @@ void	CGIControler::build_envp(const cgiConfig& cgi) {
 	}
 	_dir_path = _script_name.substr(0, _script_name.find_last_of('/'));
 
-	const std::map<std::string, std::string> & headers = _client_snapshot.get_headers();
+	const std::map<std::string, std::string> & headers = client.get_headers();
 	std::string host;
 	std::string content_type;
 	std::string content_length;
@@ -125,7 +123,7 @@ void	CGIControler::build_envp(const cgiConfig& cgi) {
 		content_length = trim_copy(it->second);
 	if (content_length.empty() && method == "POST") {
 		std::stringstream ss;
-		ss << _client_snapshot.get_body().size();
+		ss << client.get_body().size();
 		content_length = ss.str();
 	}
 
@@ -170,8 +168,32 @@ exit_status	CGIControler::execute_cgi(void) const {
 	return EXECVE_FAILURE;
 }
 
-ClientConnection &	CGIControler::get_client_ptr(void) const {
-	return this->_client_snapshot;
+bool	CGIControler::feed_cgi_process(void) {
+	if (_sent_data.empty())
+		return true;
+
+	ssize_t bytes_written = write(_input_pipe[1], _sent_data.c_str(), _sent_data.size());
+	if (bytes_written < 0) {
+		log_error("Failed to write to CGI process");
+		return false;
+	}
+	_sent_data.erase(0, bytes_written);
+	return _sent_data.empty();
+}
+
+void	CGIControler::cgi_received_data(void) {
+	char buffer[BUFFER_SIZE];
+	ssize_t bytes_read = read(_output_pipe[0], buffer, BUFFER_SIZE - 1);
+	if (bytes_read < 0) {
+		log_error("Failed to read from CGI process");
+		return ;
+	}
+	buffer[bytes_read] = '\0';
+	_received_data += buffer;
+}
+
+int	CGIControler::get_client_fd(void) const {
+	return this->_client_fd;
 }
 
 int CGIControler::get_input_w_pipe(void) const {
@@ -196,4 +218,8 @@ pid_t	CGIControler::get_child_pid(void) const {
 
 std::string	CGIControler::get_exec_path(void) const {
 	return this->_exec_path;
+}
+
+std::string	CGIControler::get_received_data(void) const {
+	return this->_received_data;
 }

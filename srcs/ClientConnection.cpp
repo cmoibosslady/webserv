@@ -103,6 +103,9 @@ void	ClientConnection::setLocationConfig() {
 	_location = 0;
 }
 
+void	ClientConnection::setBuffer(const std::string & cgi_answer) {
+	_buffer = cgi_answer;
+}
 
 const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	if (!_location || _location->cgi_configs.empty()) {
@@ -159,12 +162,25 @@ client_status	ClientConnection::processTransmit(void) {
 	return _status;
 }
 
-client_status	ClientConnection::prepareResponse(const int status_code) {
-	if (status_code == 0) {
-		log_info("Preparing response");
-		_buffer = "1. 2. 3. 4. 5. 6. 7.";
+client_status	ClientConnection::prepareResponse(int http_status_code, const std::string content) {
+	if (http_status_code != 0) {
+		log_info("Preparing response with content->status code");
 	}
-	build_response(_buffer, status_code);
+	else if (content.empty() == false) {
+		log_info("Preparing response with content->CGI");
+		_buffer = content;
+		http_status_code = 200;
+	}
+	else if (get_method() == "GET" || get_method() == "HEAD") {
+		log_info("Preparing response with content->GET or HEAD");
+		// search for file
+		_buffer = "File path: " + get_uri() + "\n";
+	}
+	else {
+		log_info("Preparing response with empty content");
+	}
+	// before call function to set _buffer to correct content, then send buffer
+	build_response(_buffer, http_status_code);
 	_status = SENDING_RESPONSE;
 	return _status;
 }
