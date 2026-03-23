@@ -96,26 +96,28 @@ void	Response::clean_fd(void) {
 bool Response::build_response(const std::string content, const int http_code, std::string co_status, const std::string content_type) {
 	const std::string empty_body;
 	log_debug<int>("Building response with HTTP code ", http_code);
-	std::string body = status_has_body(http_code) ? content : empty_body;
-	log_debug<std::string>("Content is", body);
+	_response_body << (status_has_body(http_code) ? content : empty_body);
+	log_debug<std::string>("Content is", _response_body.str());
 	std::string type = content_type;
 
-	if (status_has_body(http_code) && body.empty() && http_code >= 400 && http_code <= 599) {
-		body = build_default_error_page(http_code);
+	if (status_has_body(http_code) && !_response_body.peek() && http_code >= 400 && http_code <= 599) {
+		_response_body << build_default_error_page(http_code);
 		type = "text/html; charset=utf-8";
 	}
 
 	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
 	_headers << "Content-Type: " << type << "\r\n"
-		<< "Content-Length: " << body.size() << "\r\n"
+		<< "Content-Length: " << _response_body.str().size() << "\r\n"
 		<< "Connection: "<< co_status << "\r\n";
-	_response = _status_line.str() + _headers.str() + "\r\n" + body;
+	_response = _status_line.str() + _headers.str() + "\r\n" + _response_body.str();
+	_status_line.clear(); _headers.clear();
 	return true;
 }
 
-/* void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) { */
-/* 	_headers << "Location: " << replacement << uri.) << "\r\n"; */
-/* } */
+void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) {
+	log_debug<std::string>("uri=" + uri, "location_path="+location_path);
+	_headers << "Location: " << replacement.substr(0, replacement.find("$1")) << location_path << uri << "\r\n";
+}
 
 std::string	Response::get_content_type(const std::string & file_path) const {
 	std::string::size_type dot = file_path.find_last_of('.');

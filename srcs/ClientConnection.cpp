@@ -194,6 +194,7 @@ client_status	ClientConnection::prepareResponse(int http_status_code, std::strin
 			content = _rewrite->replacement;
 			log_debug<std::string>("Rewrite replacement", _rewrite->replacement);
 			http_status_code = _rewrite->error_code;
+			build_redirect(get_uri(), _location->path, _rewrite->replacement);
 		}
 		log_info("Preparing response with content->status code");
 	}
