@@ -64,6 +64,8 @@ client_status	Parser::parse_header(const std::string & raw_header) {
 			return READING_BODY;
 		}
 		if (std::getline(ss, value)) {
+			if (value[0] == ' ')
+				value.erase(0, 1);
 			_headers[key] = value;
 		}
 		else {
@@ -89,7 +91,7 @@ client_status	Parser::parse_body(const std::string & body) {
 	try { content_length = ft_stoul(_headers["Content-Length"]); }
 	catch (const std::exception & e) { return BAD_REQUEST; }
 	if (_body.size() >= content_length) {
-		log_info("End of body reached");
+		log_info("End of body reached by content_length");
 		_body.substr(0, content_length);
 		return BUILDING_RESPONSE;
 	}

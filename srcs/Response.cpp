@@ -103,19 +103,18 @@ bool Response::build_response(const std::string content, const int http_code, st
 		body = build_default_error_page(http_code);
 		type = "text/html; charset=utf-8";
 	}
-	if (co_status != "keep-alive" && co_status != "close")
-		co_status = "close";
 
-	std::stringstream ss;
-	ss << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n"
-		<< "Content-Type: " << type << "\r\n"
+	_request_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
+	_headers << "Content-Type: " << type << "\r\n"
 		<< "Content-Length: " << body.size() << "\r\n"
-		<< "Connection: "<< co_status << "\r\n"
-		<< "\r\n"
-		<< body;
-	_response = ss.str();
+		<< "Connection: "<< co_status << "\r\n";
+	_response = _request_line.str() + _headers.str() + body + "\r\n";
 	return true;
 }
+
+/* void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) { */
+/* 	_headers << "Location: " << replacement << uri.) << "\r\n"; */
+/* } */
 
 std::string	Response::get_content_type(const std::string & file_path) const {
 	std::string::size_type dot = file_path.find_last_of('.');
@@ -141,7 +140,7 @@ std::string	Response::get_content_type(const std::string & file_path) const {
 }
 
 client_status Response::send_response(void) {
-	log_warning<int>("Sending response to client fd ", _fd);
+	log_warning<std::string>("Sending response to client fd ", _response);
 	if (_response.empty()) {
 		log_error("Response is empty, nothing to send");
 		return WAITING;
@@ -151,6 +150,7 @@ client_status Response::send_response(void) {
 		log_error("Failed to send response to client");
 		return WAITING;
 	}
+	log_debug<ssize_t>("Bytes send: ", bytes_send);
 	if (static_cast<size_t>(bytes_send) == _response.size())
 		return WAITING;
 	size_t	by = static_cast<size_t>(bytes_send);

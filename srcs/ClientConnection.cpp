@@ -115,14 +115,18 @@ void	ClientConnection::setBuffer(const std::string cgi_answer) {
 	}
 }
 
-bool	ClientConnection::needs_redirect(void) const {
+bool	ClientConnection::needs_redirect(void) {
 	std::string	uri = get_uri().substr(get_uri().find(_location->path) + _location->path.size());
 	
 	for (std::set<rewriteConfig>::const_iterator it = _location->rewrites.begin(); it != _location->rewrites.end(); ++it) {
 		log_debug<std::string>("Uri=" + uri, "pattern="+it->pattern);
-		if (uri == it->pattern)
-			return true;
+		if (uri == it->pattern) {
+			log_debug<std::string>("Replace by", it->replacement);
+			_rewrite = &(*it);
+			return true;	
+		}
 	}
+	_rewrite = NULL;
 	return false;
 }
 
@@ -183,8 +187,13 @@ client_status	ClientConnection::processTransmit(void) {
 	return _status;
 }
 
-client_status	ClientConnection::prepareResponse(int http_status_code, const std::string content) {
+client_status	ClientConnection::prepareResponse(int http_status_code, std::string content) {
+	log_info("Connection status: " + get_headers().at("Connection"));
 	if (http_status_code != 0) {
+		if (http_status_code == 300) {
+			content = _rewrite->replacement;
+			http_status_code = _rewrite->error_code;
+		}
 		log_info("Preparing response with content->status code");
 	}
 	else if (content.empty() == false) {
@@ -201,7 +210,7 @@ client_status	ClientConnection::prepareResponse(int http_status_code, const std:
 		log_info("Preparing response with empty content");
 	}
 	// before call function to set _buffer to correct content, then send buffer
-	build_response(_buffer, http_status_code, get_headers().find("Connection")->second);
+	build_response(_buffer, http_status_code, get_headers().at("Connection"));
 	_status = SENDING_RESPONSE;
 	return _status;
 }

@@ -37,14 +37,14 @@ class ClientConnection : public Parser, public Response
 		std::string	getLocationRoot() const;
 		void		setBuffer(const std::string cgi_answer);
 
-		bool	needs_redirect(void) const;
+		bool	needs_redirect(void);
 		bool	needs_upload(void) const;
 
 		const cgiConfig *	needs_cgi(void) const;
 		exit_status			launch_execve(void);
 
 		client_status		processTransmit(void);
-		client_status		prepareResponse(int http_status_code = 0, const std::string content = "");
+		client_status		prepareResponse(int http_status_code = 0, std::string content = "");
 		client_status		send_response(void);
 
 	private:
@@ -55,6 +55,7 @@ class ClientConnection : public Parser, public Response
 
 		const serverConfig		* _server;
 		const locationConfig	* _location;
+		const rewriteConfig			*_rewrite;
 };
 
 #endif
