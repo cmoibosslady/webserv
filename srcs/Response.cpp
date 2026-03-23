@@ -115,13 +115,8 @@ bool Response::build_response(const std::string content, const int http_code, st
 }
 
 void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) {
-	log_debug<std::string>("uri=" + uri, "location_path="+location_path);
 	_headers << "Location: " << replacement.substr(0, replacement.find("$1"));
-	if (location_path[0] == '/')
-		_headers << location_path.substr(1, location_path.size());
-	else
-		_headers << location_path;
-	_headers << uri.substr(uri.find(location_path) + location_path.size()) << "\r\n";
+	_headers << uri.substr(uri.find(location_path) + location_path.size() + 1) << "\r\n";
 }
 
 std::string	Response::get_content_type(const std::string & file_path) const {
