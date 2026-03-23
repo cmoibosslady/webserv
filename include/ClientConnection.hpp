@@ -55,7 +55,7 @@ class ClientConnection : public Parser, public Response
 
 		const serverConfig		* _server;
 		const locationConfig	* _location;
-		const rewriteConfig			*_rewrite;
+		const rewriteConfig		*_rewrite;
 };
 
 #endif

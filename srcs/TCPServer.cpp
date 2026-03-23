@@ -193,6 +193,10 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	}
 	else if (revents & POLLOUT) {
 		status = _client_ptr->send_response();
+		if (status == WAITING) {
+			try { _client_ptr->get_headers().at("Connection");_poller.modify(fd, POLLIN); }
+			catch (std::out_of_range & e) { close_client_connection("Close in header", fd); }
+		}
 	}
 	if (status == CLOSING || status == RECV_FAILURE || status == SEND_FAILURE) {
 		log_info("Taking down client connection");
