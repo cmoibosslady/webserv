@@ -26,6 +26,7 @@ ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
 	_lastActivity = other._lastActivity;
 	_server = other._server;
 	_location = other._location;
+	_rewrite = other._rewrite;
 	return *this;
 }
 
@@ -214,6 +215,7 @@ client_status	ClientConnection::prepareResponse(int http_status_code, std::strin
 	// before call function to set _buffer to correct content, then send buffer
 	build_response(_buffer, http_status_code, get_headers().at("Connection"));
 	_status = SENDING_RESPONSE;
+	_buffer.clear();
 	return _status;
 }
 
