@@ -115,6 +115,17 @@ void	ClientConnection::setBuffer(const std::string cgi_answer) {
 	}
 }
 
+bool	ClientConnection::needs_redirect(void) const {
+	std::string	uri = get_uri().substr(get_uri().find(_location->path) + _location->path.size());
+	
+	for (std::set<rewriteConfig>::const_iterator it = _location->rewrites.begin(); it != _location->rewrites.end(); ++it) {
+		log_debug<std::string>("Uri=" + uri, "pattern="+it->pattern);
+		if (uri == it->pattern)
+			return true;
+	}
+	return false;
+}
+
 const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	if (!_location || _location->cgi_configs.empty()) {
 		log_debug<std::string>("No cgi config found for URI: ", get_uri());
@@ -128,8 +139,10 @@ const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	log_debug<std::string>("URI extension: ", uri_extension);
 	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {
 		log_debug<std::string>("Checking CGI extension: ", it->extension);
-		if (it->extension == uri_extension)
-			return &(*it);
+		if (it->extension == uri_extension) {
+			if (it->allowed_methods.find(get_method()) != it->allowed_methods.end())
+				return &(*it);
+		}
 	}
 	log_debug<std::string>("No CGI needed for URI: ", get_uri());
 	
@@ -188,7 +201,7 @@ client_status	ClientConnection::prepareResponse(int http_status_code, const std:
 		log_info("Preparing response with empty content");
 	}
 	// before call function to set _buffer to correct content, then send buffer
-	build_response(_buffer, http_status_code);
+	build_response(_buffer, http_status_code, get_headers().find("Connection")->second);
 	_status = SENDING_RESPONSE;
 	return _status;
 }

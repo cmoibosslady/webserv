@@ -201,12 +201,13 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	else if (status == BUILDING_RESPONSE) {
 		log_info("Building response for client");
 		_client_ptr->setLocationConfig();
-		// check if redirection is needed
-		// check if uri exist
-		// check if it's alllowed method
-		// maybe all of this in Response and just the status here
-		_cgi_config_ptr = _client_ptr->needs_cgi();
-		if (_cgi_config_ptr != NULL) {
+		if (_client_ptr->needs_redirect())
+			status = _client_ptr->prepareResponse(300);
+		/* else if (_client_ptr->needs_upload()) */
+		/* 	; */
+		/* else if (_client_ptr->is_a_correct_uri()) */
+		/* 	; */
+		else if ((_cgi_config_ptr = _client_ptr->needs_cgi()) && _cgi_config_ptr) {
 			log_info("CGI detected");	
 			if (prepare_cgi_process(fd) != SUCCESS) {;
 				log_error("Failed to prepare CGI process. Child must quit");
@@ -214,7 +215,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 			}
 			return SUCCESS;
 		}
-		status = _client_ptr->prepareResponse();
+		else
+			status = _client_ptr->prepareResponse();
 		if (status == SENDING_RESPONSE) {
 			_poller.modify(fd, POLLOUT);
 		}

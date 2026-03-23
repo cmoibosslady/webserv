@@ -153,7 +153,7 @@ int	config::addRewrite(Tokeniser &tokeniser, locationConfig &location) const {
 		return -1;
 	}
 	struct rewriteConfig rule;
-	rule.pattern = token.value.substr(2, token.value.size() - 1);
+	rule.pattern = token.value.substr(1, token.value.size() - 2);
 	rule.replacement = tokeniser.getNextToken().value;
 	token = tokeniser.getNextToken();
 	if (token.value == "redirect")

@@ -93,7 +93,7 @@ void	Response::clean_fd(void) {
 	_fd = -1;
 }
 
-bool Response::build_response(const std::string content, const int http_code, const std::string content_type) {
+bool Response::build_response(const std::string content, const int http_code, std::string co_status, const std::string content_type) {
 	const std::string empty_body;
 	log_debug<int>("Building response with HTTP code ", http_code);
 	std::string body = status_has_body(http_code) ? content : empty_body;
@@ -103,12 +103,14 @@ bool Response::build_response(const std::string content, const int http_code, co
 		body = build_default_error_page(http_code);
 		type = "text/html; charset=utf-8";
 	}
+	if (co_status != "keep-alive" && co_status != "close")
+		co_status = "close";
 
 	std::stringstream ss;
 	ss << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n"
 		<< "Content-Type: " << type << "\r\n"
 		<< "Content-Length: " << body.size() << "\r\n"
-		<< "Connection: close\r\n"
+		<< "Connection: "<< co_status << "\r\n"
 		<< "\r\n"
 		<< body;
 	_response = ss.str();
