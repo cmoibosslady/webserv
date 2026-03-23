@@ -2,9 +2,6 @@
 import html
 import os
 
-print("Content-Type: text/html; charset=utf-8")
-print()
-
 print("<!doctype html>")
 print("<html><head><meta charset='utf-8'><title>Environment Variables</title></head><body>")
 print("<h1>Environment Variables</h1>")

@@ -192,27 +192,32 @@ client_status	ClientConnection::prepareResponse(int http_status_code, std::strin
 	log_info("Connection status: " + get_headers().at("Connection"));
 	if (http_status_code != 0) {
 		if (http_status_code == 300) {
+			log_info("Preparing response with content->redirect");
 			content = _rewrite->replacement;
 			log_debug<std::string>("Rewrite replacement", _rewrite->replacement);
 			http_status_code = _rewrite->error_code;
 			build_redirect(get_uri(), _location->path, _rewrite->replacement);
+			add_to_headers("Content-Type", "text/plain; charset=utf-8");
 		}
-		log_info("Preparing response with content->status code");
-	}
-	else if (content.empty() == false) {
-		log_info("Preparing response with content->CGI");
-		_buffer = content;
-		http_status_code = 200;
+		else if (content.empty() == false) {
+			log_info("Preparing response with content->CGI");
+			_buffer = content;
+			http_status_code = 200;
+			add_to_headers("Content-Type", "text/html; charset=utf-8");
+		}
 	}
 	else if (get_method() == "GET" || get_method() == "HEAD") {
 		log_info("Preparing response with content->GET or HEAD");
 		// search for file
 		_buffer = "File path: " + get_uri() + "\n";
+		add_to_headers("Content-Type", "text/plain; charset=utf-8");
 	}
 	else {
 		log_info("Preparing response with empty content");
+		add_to_headers("Content-Type", "text/plain; charset=utf-8");
 	}
 	// before call function to set _buffer to correct content, then send buffer
+	
 	build_response(_buffer, http_status_code, get_headers().at("Connection"));
 	_status = SENDING_RESPONSE;
 	_buffer.clear();

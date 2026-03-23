@@ -93,21 +93,20 @@ void	Response::clean_fd(void) {
 	_fd = -1;
 }
 
-bool Response::build_response(const std::string content, const int http_code, std::string co_status, const std::string content_type) {
+bool Response::build_response(const std::string content, const int http_code, std::string co_status) {
 	const std::string empty_body;
 	log_debug<int>("Building response with HTTP code ", http_code);
 	_response_body << (status_has_body(http_code) ? content : empty_body);
 	log_debug<std::string>("Content is", _response_body.str());
-	std::string type = content_type;
 
-	if (status_has_body(http_code) && !_response_body.peek() && http_code >= 400 && http_code <= 599) {
+	if (_response_body.str().empty() && http_code >= 400 && http_code <= 599) {
+		log_error("an error has been detected");
 		_response_body << build_default_error_page(http_code);
-		type = "text/html; charset=utf-8";
+		add_to_headers("Content-Type", "text/html; charset=utf-8");
 	}
 
 	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
-	_headers << "Content-Type: " << type << "\r\n"
-		<< "Content-Length: " << _response_body.str().size() << "\r\n"
+	_headers << "Content-Length: " << _response_body.str().size() << "\r\n"
 		<< "Connection: "<< co_status << "\r\n";
 	_response = _status_line.str() + _headers.str() + "\r\n" + _response_body.str();
 	_status_line.str(""); _headers.str(""); _response_body.str("");
@@ -118,6 +117,11 @@ void	Response::build_redirect(const std::string & uri, const std::string & locat
 	_headers << "Location: " << replacement.substr(0, replacement.find("$1"));
 	_headers << uri.substr(uri.find(location_path) + location_path.size() + 1) << "\r\n";
 }
+
+void	Response::add_to_headers(const std::string & key, const std::string & value) {
+	_headers << key << ": " << value << "\r\n";
+}
+
 
 std::string	Response::get_content_type(const std::string & file_path) const {
 	std::string::size_type dot = file_path.find_last_of('.');
