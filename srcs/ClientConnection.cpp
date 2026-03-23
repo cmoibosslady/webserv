@@ -192,6 +192,7 @@ client_status	ClientConnection::prepareResponse(int http_status_code, std::strin
 	if (http_status_code != 0) {
 		if (http_status_code == 300) {
 			content = _rewrite->replacement;
+			log_debug<std::string>("Rewrite replacement", _rewrite->replacement);
 			http_status_code = _rewrite->error_code;
 		}
 		log_info("Preparing response with content->status code");

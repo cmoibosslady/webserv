@@ -97,6 +97,7 @@ bool Response::build_response(const std::string content, const int http_code, st
 	const std::string empty_body;
 	log_debug<int>("Building response with HTTP code ", http_code);
 	std::string body = status_has_body(http_code) ? content : empty_body;
+	log_debug<std::string>("Content is", body);
 	std::string type = content_type;
 
 	if (status_has_body(http_code) && body.empty() && http_code >= 400 && http_code <= 599) {
@@ -104,11 +105,11 @@ bool Response::build_response(const std::string content, const int http_code, st
 		type = "text/html; charset=utf-8";
 	}
 
-	_request_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
+	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
 	_headers << "Content-Type: " << type << "\r\n"
 		<< "Content-Length: " << body.size() << "\r\n"
 		<< "Connection: "<< co_status << "\r\n";
-	_response = _request_line.str() + _headers.str() + body + "\r\n";
+	_response = _status_line.str() + _headers.str() + "\r\n" + body;
 	return true;
 }
 

@@ -28,11 +28,11 @@ class Response {
 
 
 	private:
-		std::stringstream		_request_line; // careful same attributes inside parser..
+		std::stringstream		_status_line; // careful same attributes inside parser..
 		std::stringstream		_headers;
 		std::stringstream		_response_body;
 		std::string				_response;
-		int					_fd;
+		int						_fd;
 };
 
 #endif

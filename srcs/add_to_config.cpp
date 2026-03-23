@@ -157,7 +157,7 @@ int	config::addRewrite(Tokeniser &tokeniser, locationConfig &location) const {
 	rule.replacement = tokeniser.getNextToken().value;
 	token = tokeniser.getNextToken();
 	if (token.value == "redirect")
-		rule.error_code = 303;
+		rule.error_code = 307;
 	else if (token.value == "permanent")
 		rule.error_code = 301;
 	else
