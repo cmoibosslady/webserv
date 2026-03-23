@@ -110,13 +110,18 @@ bool Response::build_response(const std::string content, const int http_code, st
 		<< "Content-Length: " << _response_body.str().size() << "\r\n"
 		<< "Connection: "<< co_status << "\r\n";
 	_response = _status_line.str() + _headers.str() + "\r\n" + _response_body.str();
-	_status_line.clear(); _headers.clear();
+	_status_line.str(""); _headers.str(""); _response_body.str("");
 	return true;
 }
 
 void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) {
 	log_debug<std::string>("uri=" + uri, "location_path="+location_path);
-	_headers << "Location: " << replacement.substr(0, replacement.find("$1")) << location_path << uri << "\r\n";
+	_headers << "Location: " << replacement.substr(0, replacement.find("$1"));
+	if (location_path[0] == '/')
+		_headers << location_path.substr(1, location_path.size());
+	else
+		_headers << location_path;
+	_headers << uri.substr(uri.find(location_path) + location_path.size()) << "\r\n";
 }
 
 std::string	Response::get_content_type(const std::string & file_path) const {
