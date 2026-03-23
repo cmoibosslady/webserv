@@ -150,10 +150,12 @@ client_status Response::send_response(void) {
 		log_error("Failed to send response to client");
 		return WAITING;
 	}
-	log_debug<ssize_t>("Bytes send: ", bytes_send);
+	log_debug<size_t>("Response size", _response.size());
+	log_debug<ssize_t>("Bytes send", bytes_send);
 	if (static_cast<size_t>(bytes_send) == _response.size())
 		return WAITING;
 	size_t	by = static_cast<size_t>(bytes_send);
+	log_debug<size_t>("Size_t bytes", by);
 	_response.erase(0, by);
 	return SENDING_RESPONSE;
 }
