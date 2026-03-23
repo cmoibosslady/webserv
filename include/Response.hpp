@@ -23,7 +23,16 @@ class Response {
 		
 		void			build_redirect(const std::string & uri, const std::string & loc_path, const std::string & replacement);
 
-		void			add_to_headers(const std::string & key, const std::string & value);
+
+		template<typename T>
+			void 	add_to_headers(const std::string &key, const T & value) {
+				_headers << key << ": " << value << "\r\n";
+			}
+
+		client_status			check_file(const std::string & file_path) const;
+		client_status			open_file(const std::string & file_path) const;
+		client_status			check_directory(const std::string & dir_path) const;
+		client_status			upload_directory(const std::string & dir_path) const;
 
 		std::string		get_content_type(const std::string & file_path) const;
 		client_status	send_response(void);	

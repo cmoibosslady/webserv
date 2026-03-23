@@ -106,22 +106,16 @@ bool Response::build_response(const std::string content, const int http_code, st
 	}
 
 	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
-	_headers << "Content-Length: " << _response_body.str().size() << "\r\n"
-		<< "Connection: "<< co_status << "\r\n";
+	add_to_headers<size_t>("Content-Length", _response_body.str().size());
+	add_to_headers<std::string>("Connection", co_status);
 	_response = _status_line.str() + _headers.str() + "\r\n" + _response_body.str();
 	_status_line.str(""); _headers.str(""); _response_body.str("");
 	return true;
 }
 
 void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) {
-	_headers << "Location: " << replacement.substr(0, replacement.find("$1"));
-	_headers << uri.substr(uri.find(location_path) + location_path.size() + 1) << "\r\n";
+	add_to_headers<std::string>("Location", replacement.substr(0, replacement.find("$1")) + uri.substr(uri.find(location_path) + location_path.size()));
 }
-
-void	Response::add_to_headers(const std::string & key, const std::string & value) {
-	_headers << key << ": " << value << "\r\n";
-}
-
 
 std::string	Response::get_content_type(const std::string & file_path) const {
 	std::string::size_type dot = file_path.find_last_of('.');
