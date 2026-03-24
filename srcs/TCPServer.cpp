@@ -207,10 +207,6 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		_client_ptr->setLocationConfig();
 		if (_client_ptr->needs_redirect())
 			status = _client_ptr->prepareResponse(300);
-		/* else if (_client_ptr->needs_upload()) */
-		/* 	; */
-		/* else if (_client_ptr->is_a_correct_uri()) */
-		/* 	; */
 		else if ((_cgi_config_ptr = _client_ptr->needs_cgi()) && _cgi_config_ptr) {
 			log_info("CGI detected");	
 			if (prepare_cgi_process(fd) != SUCCESS) {;

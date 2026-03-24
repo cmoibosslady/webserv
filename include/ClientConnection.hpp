@@ -10,6 +10,16 @@
 # include "Parser.hpp"
 # include "Response.hpp"
 
+enum request_type {
+	REDIRECT,
+	CGI,
+	STATIC_FILE,
+	UPLOAD,
+	DELETE,
+	AUTO_INDEX,
+	UNKNOWN
+};
+
 class ClientConnection : public Parser, public Response 
 {
 	private:
@@ -37,14 +47,14 @@ class ClientConnection : public Parser, public Response
 		std::string	getLocationRoot() const;
 		void		setBuffer(const std::string cgi_answer);
 
-		bool	needs_redirect(void);
-		bool	needs_upload(void) const;
+		bool			needs_redirect(void);
+		request_type	find_type_request(void);
 
 		const cgiConfig *	needs_cgi(void) const;
 		exit_status			launch_execve(void);
 
 		client_status		processTransmit(void);
-		client_status		prepareResponse(int http_status_code = 0, std::string content = "");
+		client_status		prepareResponse(int http_status_code = 0, std::string content = ""); // to delete afterwards
 		client_status		send_response(void);
 
 	private:

@@ -116,6 +116,14 @@ void	ClientConnection::setBuffer(const std::string cgi_answer) {
 	}
 }
 
+request_type	ClientConnection::find_type_request(void) {
+	if (!_location)
+		return UNKNOWN;
+	std::string uri = get_uri().substr(get_uri().find(_location->path) + _location->path.size());
+	
+	return UNKNOWN;
+}
+
 bool	ClientConnection::needs_redirect(void) {
 	std::string	uri = get_uri().substr(get_uri().find(_location->path) + _location->path.size());
 	
