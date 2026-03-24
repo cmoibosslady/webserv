@@ -116,7 +116,7 @@ bool Response::build_response(const std::string content, const int http_code, st
 }
 
 void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) {
-	add_to_headers<std::string>("Location", replacement.substr(0, replacement.find("$1")) + uri.substr(uri.find(location_path) + location_path.size()));
+	add_to_headers<std::string>("Location", replacement.substr(0, replacement.find("/$1")) + uri.substr(uri.find(location_path) + location_path.size()));
 }
 
 std::string	Response::get_content_type(const std::string & file_path) const {

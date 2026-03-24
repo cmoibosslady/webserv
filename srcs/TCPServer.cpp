@@ -194,7 +194,12 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	else if (revents & POLLOUT) {
 		status = _client_ptr->send_response();
 		if (status == WAITING) {
-			try { _client_ptr->get_headers().at("Connection");_poller.modify(fd, POLLIN); }
+			try { 
+				if (_client_ptr->get_headers().at("Connection") == "keep-alive")
+					_poller.modify(fd, POLLIN);
+				else
+					status = CLOSING;
+			}
 			catch (std::out_of_range & e) { close_client_connection("Close in header", fd); }
 		}
 	}
@@ -208,8 +213,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		if (_client_ptr->needs_redirect())
 			status = _client_ptr->prepareResponse(300);
 		else if ((_cgi_config_ptr = _client_ptr->needs_cgi()) && _cgi_config_ptr) {
-			log_info("CGI detected");	
-			if (prepare_cgi_process(fd) != SUCCESS) {;
+			log_info("CGI detected");
+			if (prepare_cgi_process(fd) != SUCCESS) {
 				log_error("Failed to prepare CGI process. Child must quit");
 				return EXECVE_FAILURE;
 			}
