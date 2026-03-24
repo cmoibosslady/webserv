@@ -53,6 +53,9 @@ class ClientConnection : public Parser, public Response
 		const cgiConfig *	needs_cgi(void) const;
 		exit_status			launch_execve(void);
 
+		bool	needs_static_response(void);
+		int		get_on_file();
+
 		client_status		processTransmit(void);
 		client_status		prepareResponse(int http_status_code = 0, std::string content = ""); // to delete afterwards
 		client_status		send_response(void);

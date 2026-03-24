@@ -162,6 +162,37 @@ const cgiConfig *	ClientConnection::needs_cgi(void) const {
 	return NULL;
 }
 
+bool	ClientConnection::needs_static_response(void) {
+	if (get_method() != "GET")
+		return false;
+	return true;
+}
+
+int		ClientConnection::get_on_file(void) {
+	if (!_location || _location->root.empty()) {
+		_status = prepareResponse(404);
+		return _status;
+	}
+	std::string uri_path = get_uri().substr(0, get_uri().find('?')); // on enleve la query '? et apres'
+	std::string relative_path = uri_path;
+	if (uri_path.find(_location->path) == 0)
+		relative_path = uri_path.substr(_location->path.size());
+	while (!relative_path.empty() && relative_path[0] == '/')
+		relative_path.erase(0, 1);
+	std::string file_path = _location->root;
+	if (!file_path.empty() && file_path[file_path.size() - 1] != '/')
+		file_path += '/';
+	file_path += relative_path;
+	if (access(file_path.c_str(), F_OK) != 0)
+		_status = prepareResponse(404);
+	else if (access(file_path.c_str(), R_OK) != 0)
+		_status = prepareResponse(403);
+	else
+		_status = prepareResponse(200);
+	return _status;
+}
+
+
 client_status	ClientConnection::processTransmit(void) {
 	log_info("Processing client data");
 	char buffer[BUFFER_SIZE];

@@ -220,6 +220,9 @@ exit_status	TCPServer::handle_client_event(int fd) {
 			}
 			return SUCCESS;
 		}
+		else if (_client_ptr->needs_static_response()) {
+			_client_ptr->get_on_file();	
+		}
 		else
 			status = _client_ptr->prepareResponse();
 		if (status == SENDING_RESPONSE) {
