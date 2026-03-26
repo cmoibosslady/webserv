@@ -83,6 +83,7 @@ client_status	Parser::parse_header(const std::string & raw_header) {
 // This function, the body is not necessarily complete
 client_status	Parser::parse_body(const std::string & body) {
 	_body.append(body);
+	// add max_size_body to the config and check it here
 	if (check_chunk() == true && _body.find("\r\n0\r\n\r\n") != std::string::npos) {
 		body.substr(0, body.find("\r\n0\r\n\r\n") + 7);
 		return BUILDING_RESPONSE;

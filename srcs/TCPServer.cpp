@@ -309,11 +309,10 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 			}
 			if (exit_status == 0) { // Exit was correct we can read the output of the CGI
 				_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
-				exit_status = 200;
+				_client_ptr->prepareResponse(CGI);
 			}
 			else 
-				exit_status = 500; // If CGI process exit with error code, we send 500 to client
-			_client_ptr->prepareResponse(exit_status);
+			_client_ptr->prepare_error_response(exit_status);
 			_poller.modify(_client_ptr->getFd(), POLLOUT);
 			close(fd);
 		}
