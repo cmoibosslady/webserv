@@ -209,25 +209,48 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	}
 	else if (status == BUILDING_RESPONSE) {
 		log_info("Building response for client");
-		_client_ptr->setLocationConfig();
-		if (_client_ptr->needs_redirect())
-			status = _client_ptr->prepareResponse(300);
-		else if ((_cgi_config_ptr = _client_ptr->needs_cgi()) && _cgi_config_ptr) {
+		if (build_client_response(status) == EXECVE_FAILURE) {
+			return EXECVE_FAILURE;
+		}
+	}
+	if (status == SENDING_RESPONSE) {
+		log_info("Sending response to client");
+		_poller.modify(fd, POLLOUT);
+	}
+	return SUCCESS;
+}
+
+exit_status	TCPServer::build_client_response(client_status &status) {
+	_client_ptr->setLocationConfig();
+
+	switch (_client_ptr->find_type_request()) {
+		case REDIRECT:
+			log_info("Redirect detected");
+			status = _client_ptr->prepareResponse(REDIRECT);
+			break ;
+		case CGI:
 			log_info("CGI detected");
-			if (prepare_cgi_process(fd) != SUCCESS) {
-				log_error("Failed to prepare CGI process. Child must quit");
-				return EXECVE_FAILURE;
-			}
-			return SUCCESS;
-		}
-		else if (_client_ptr->needs_static_response()) {
-			_client_ptr->get_on_file();	
-		}
-		else
-			status = _client_ptr->prepareResponse();
-		if (status == SENDING_RESPONSE) {
-			_poller.modify(fd, POLLOUT);
-		}
+			return prepare_cgi_process(_client_ptr->getFd());
+		case UPLOAD:
+			log_info("Upload detected");
+			_client_ptr->prepareResponse(UPLOAD);
+			break ;
+		case DELETE:
+			log_info("Delete detected");
+			status = _client_ptr->prepareResponse(DELETE);
+			break ;
+		case AUTO_INDEX:
+			log_info("Autoindex detected");
+			status = _client_ptr->prepareResponse(AUTO_INDEX);
+			break ;
+		case STATIC_FILE:
+			log_info("Static file detected");
+			status = _client_ptr->prepareResponse(STATIC_FILE);
+			break ;
+		case UNKNOWN:
+			log_info("Unknown request type detected");
+			status = _client_ptr->prepareResponse(UNKNOWN);
+			break ;
 	}
 	return SUCCESS;
 }
@@ -236,14 +259,14 @@ exit_status	TCPServer::prepare_cgi_process(const int fd) {
 	CGIControler cgi(fd);
 	if (cgi.initiate_cgi(*_client_ptr) == PIPE_FAILURE) {
 		log_error("Failed to initiate CGI process");
-		_client_ptr->prepareResponse(500);
+		_client_ptr->prepare_error_response(500);
 		_poller.modify(_client_ptr->getFd(), POLLOUT);
 		return PIPE_FAILURE;
 	}
 	pid_t cgi_pid = cgi.fork_dup_op(*_client_ptr);
 	if (cgi_pid == -1) {
 		log_error("Failed to fork CGI process");
-		_client_ptr->prepareResponse(500);
+		_client_ptr->prepare_error_response(500);
 		_poller.modify(_client_ptr->getFd(), POLLOUT);
 		return FORK_FAILURE;
 	}

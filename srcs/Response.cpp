@@ -94,6 +94,10 @@ void	Response::clean_fd(void) {
 	_fd = -1;
 }
 
+void	Response::setErrorPages(const std::map<int, std::string> &error_pages) {
+	_error_pages = error_pages;
+}
+
 bool Response::build_response(const std::string content, const int http_code, std::string co_status) {
 	const std::string empty_body;
 	log_debug<int>("Building response with HTTP code ", http_code);

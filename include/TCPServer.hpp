@@ -31,6 +31,7 @@ class TCPServer {
 		int						add_new_client();
 		const serverConfig *	find_server_config(int fd);
 		exit_status				handle_client_event(int fd);
+		exit_status				build_client_response(client_status &status);
 
 		bool			check_for_cgi(void);
 

@@ -1,6 +1,7 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
+# include <map>
 # include <sstream>
 # include <string>
 
@@ -16,9 +17,11 @@ class Response {
 		Response & operator=(const Response & other);
 		~Response(void);
 
-		void				clean_fd(void);
+		void	clean_fd(void);
+		void 	prepare_error_response(int http_code);
 
 	protected:
+		void			setErrorPages(const std::map<int, std::string> &error_pages);
 		bool			build_response(const std::string content, const int http_code, std::string co_status);
 		
 		void			build_redirect(const std::string & uri, const std::string & loc_path, const std::string & replacement);
@@ -44,6 +47,8 @@ class Response {
 		std::stringstream		_response_body;
 		std::string				_response;
 		int						_fd;
+
+		std::map<int, std::string>	_error_pages;
 };
 
 #endif

@@ -38,26 +38,24 @@ class ClientConnection : public Parser, public Response
 		const std::string &		get_uri(void) const;
 		const std::map<std::string, std::string> &	get_headers(void) const;
 		const std::string &		get_body(void) const;
-		int						closeConnection(void);
+		std::string				getLocationRoot() const;
+		cgiConfig*				getCgiConfig() const;
 		int						getStatus() const;
 
-		void		updateLastActivity(void);
 		void		setServerConfig(const serverConfig * config);
 		void		setLocationConfig();
-		std::string	getLocationRoot() const;
 		void		setBuffer(const std::string cgi_answer);
 
-		bool			needs_redirect(void);
-		request_type	find_type_request(void);
-
-		const cgiConfig *	needs_cgi(void) const;
-		exit_status			launch_execve(void);
-
-		bool	needs_static_response(void);
-		int		get_on_file();
+		void		updateLastActivity(void);
+		int			closeConnection(void);
 
 		client_status		processTransmit(void);
-		client_status		prepareResponse(int http_status_code = 0, std::string content = ""); // to delete afterwards
+
+		request_type		find_type_request(void);
+		client_status		prepareResponse(request_type rq); 
+		void 				prepare_error_response(int http_code);
+		exit_status			launch_execve(void);
+
 		client_status		send_response(void);
 
 	private:
@@ -68,6 +66,7 @@ class ClientConnection : public Parser, public Response
 
 		const serverConfig		* _server;
 		const locationConfig	* _location;
+		const cgiConfig			* _cgi;
 		const rewriteConfig		*_rewrite;
 };
 

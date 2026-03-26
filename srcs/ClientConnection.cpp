@@ -27,6 +27,7 @@ ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
 	_server = other._server;
 	_location = other._location;
 	_rewrite = other._rewrite;
+	_cgi = other._cgi;
 	return *this;
 }
 
@@ -74,6 +75,7 @@ void	ClientConnection::updateLastActivity(void) {
 void	ClientConnection::setServerConfig(const serverConfig * config) {
 	_server = config;
 	log_debug<int>("Server port: ", _server->port);
+	setErrorPages(_server->error_pages);
 }
 
 void	ClientConnection::setLocationConfig() {
@@ -227,7 +229,8 @@ client_status	ClientConnection::processTransmit(void) {
 	return _status;
 }
 
-client_status	ClientConnection::prepareResponse(int http_status_code, std::string content) {
+
+client_status	ClientConnection::prepareResponse(request_type rq) {
 	log_info("Connection status: " + get_headers().at("Connection"));
 	if (http_status_code != 0) {
 		if (http_status_code == 300) {
