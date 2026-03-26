@@ -53,7 +53,6 @@ class ClientConnection : public Parser, public Response
 
 		request_type		find_type_request(void);
 		client_status		prepareResponse(request_type rq); 
-		void 				prepare_error_response(int http_code);
 		exit_status			launch_execve(void);
 
 		client_status		send_response(void);
