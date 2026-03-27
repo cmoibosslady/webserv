@@ -7,11 +7,11 @@
 #include "main.hpp"
 #include "main.tpp"
 
-ClientConnection::ClientConnection(void): Parser(), Response(-1), _fd(-1), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)), _server(0), _location(0) {
+ClientConnection::ClientConnection(void): Parser(), Response(-1), _fd(-1), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
 	// log_info("ClientConnection created");
 }
 
-ClientConnection::ClientConnection(int fd): Parser(), Response(fd), _fd(fd), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)), _server(0), _location(0) {
+ClientConnection::ClientConnection(int fd): Parser(), Response(fd), _fd(fd), _buffer(""), _status(WAITING), _lastActivity(std::time(NULL)) {
 	// log_info("ClientConnection created after connection accepted");
 }
 
@@ -157,41 +157,41 @@ client_status	ClientConnection::processTransmit(void) {
 }
 
 
-client_status	ClientConnection::prepareResponse(request_type rq) {
-	log_info("Connection status: " + get_headers().at("Connection"));
-	if (http_status_code != 0) {
-		if (http_status_code == 300) {
-			log_info("Preparing response with content->redirect");
-			content = _rewrite->replacement;
-			log_debug<std::string>("Rewrite replacement", _rewrite->replacement);
-			http_status_code = _rewrite->error_code;
-			build_redirect(get_uri(), _location->path, _rewrite->replacement);
-			add_to_headers("Content-Type", "text/plain; charset=utf-8");
-		}
-		else if (content.empty() == false) {
-			log_info("Preparing response with content->CGI");
-			_buffer = content;
-			http_status_code = 200;
-			add_to_headers("Content-Type", "text/html; charset=utf-8");
-		}
-	}
-	else if (get_method() == "GET" || get_method() == "HEAD") {
-		log_info("Preparing response with content->GET or HEAD");
-		// search for file
-		_buffer = "File path: " + get_uri() + "\n";
-		add_to_headers("Content-Type", "text/plain; charset=utf-8");
-	}
-	else {
-		log_info("Preparing response with empty content");
-		add_to_headers("Content-Type", "text/plain; charset=utf-8");
-	}
-	// before call function to set _buffer to correct content, then send buffer
+// client_status	ClientConnection::prepareResponse(request_type rq) {
+// 	log_info("Connection status: " + get_headers().at("Connection"));
+// 	if (http_status_code != 0) {
+// 		if (http_status_code == 300) {
+// 			log_info("Preparing response with content->redirect");
+// 			content = _rewrite->replacement;
+// 			log_debug<std::string>("Rewrite replacement", _rewrite->replacement);
+// 			http_status_code = _rewrite->error_code;
+// 			build_redirect(get_uri(), _location->path, _rewrite->replacement);
+// 			add_to_headers("Content-Type", "text/plain; charset=utf-8");
+// 		}
+// 		else if (content.empty() == false) {
+// 			log_info("Preparing response with content->CGI");
+// 			_buffer = content;
+// 			http_status_code = 200;
+// 			add_to_headers("Content-Type", "text/html; charset=utf-8");
+// 		}
+// 	}
+// 	else if (get_method() == "GET" || get_method() == "HEAD") {
+// 		log_info("Preparing response with content->GET or HEAD");
+// 		// search for file
+// 		_buffer = "File path: " + get_uri() + "\n";
+// 		add_to_headers("Content-Type", "text/plain; charset=utf-8");
+// 	}
+// 	else {
+// 		log_info("Preparing response with empty content");
+// 		add_to_headers("Content-Type", "text/plain; charset=utf-8");
+// 	}
+// 	// before call function to set _buffer to correct content, then send buffer
 	
-	build_response(_buffer, http_status_code, get_headers().at("Connection"));
-	_status = SENDING_RESPONSE;
-	_buffer.clear();
-	return _status;
-}
+// 	build_response(_buffer, http_status_code, get_headers().at("Connection"));
+// 	_status = SENDING_RESPONSE;
+// 	_buffer.clear();
+// 	return _status;
+// }
 
 client_status	ClientConnection::send_response(void) {
 	_status = Response::send_response();

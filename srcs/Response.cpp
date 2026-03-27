@@ -1,6 +1,8 @@
+#include <cctype>
+#include <fstream>
 #include <sstream>
 #include <sys/socket.h>
-#include <cctype>
+#include <unistd.h>
 #include "main.tpp"
 #include "Response.hpp"
 
@@ -33,7 +35,7 @@ static const char *	get_reason_phrase(int http_code) {
 		case 429: return "Too Many Requests";
 		case 500: return "Internal Server Error";
 		case 501: return "Not Implemented";
-		case 502: return "Bad Gateway";
+case 502: return "Bad Gateway";
 		case 503: return "Service Unavailable";
 		case 504: return "Gateway Timeout";
 		case 505: return "HTTP Version Not Supported";
@@ -66,11 +68,11 @@ static std::string	build_default_error_page(int http_code) {
 	return html.str();
 }
 
-Response::Response(void) {
+Response::Response(void): _server(0), _location(0), _cgi(0), _rewrite(0) {
 	// log_info("Response constructor called");
 }
 
-Response::Response(int fd) : _fd(fd) {
+Response::Response(int fd) : _server(0), _location(0), _cgi(0), _rewrite(0), _fd(fd) {
 	// log_info("Response constructor with fd called");
 }
 
@@ -81,6 +83,10 @@ Response::Response(const Response & other) {
 
 Response & Response::operator=(const Response & other) {
 	// log_info("Response assignment operator called");
+	this->_server = other._server;
+	this->_location = other._location;
+	this->_cgi = other._cgi;
+	this->_rewrite = other._rewrite;
 	this->_fd = other._fd;
 	this->_response = other._response;
 	return *this;
@@ -94,33 +100,63 @@ void	Response::clean_fd(void) {
 	_fd = -1;
 }
 
+void	Response::classic_http_hat(int http_code) {
+	const std::string empty_body;
+	log_debug<int>("Building response with HTTP code ", http_code);
+	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
+	if (http_code >= 400)
+		prepare_error_content(http_code);
+	else
+		_response_body << empty_body;
+}
+
+void	Response::prepare_error_content(int http_code) {
+	if (_error_pages.find(http_code) == _error_pages.end()) {
+		if (access(_error_pages.at(http_code).c_str(), F_OK | R_OK) == -1) {
+			std::ifstream	ifs(_error_pages.at(http_code));
+			if (ifs.is_open()) {
+				_response_body << ifs;
+				return ;
+			}
+		}
+	}
+	_response_body << build_default_error_page(http_code);
+	return ;
+}
+
+/// Prepare content of response
+
+void	Response::prepare_redirect(const std::string & uri) {
+	log_info("Preparing response for redirect");
+	classic_http_hat(_rewrite->error_code);
+
+	const std::string & replacm = _rewrite->replacement;
+	add_to_headers<std::string>("Location", replacm.substr(0, replacm.find("/$1")) + uri.substr(uri.find(_location->path) + _location->path.size()));
+
+}
+
+
+/// New function for new organisation -> too much maybe?
+
+
 void	Response::setErrorPages(const std::map<int, std::string> &error_pages) {
 	_error_pages = error_pages;
 }
 
 bool Response::build_response(const std::string content, const int http_code, std::string co_status) {
-	const std::string empty_body;
-	log_debug<int>("Building response with HTTP code ", http_code);
-	_response_body << (status_has_body(http_code) ? content : empty_body);
 	log_debug<std::string>("Content is", _response_body.str());
 
 	if (_response_body.str().empty() && http_code >= 400 && http_code <= 599) {
 		log_error("an error has been detected");
 		_response_body << build_default_error_page(http_code);
-		add_to_headers("Content-Type", "text/html; charset=utf-8");
 	}
 
-	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
 
 	add_to_headers<size_t>("Content-Length", _response_body.str().size());
 	add_to_headers<std::string>("Connection", co_status);
 	_response = _status_line.str() + _headers.str() + "\r\n" + _response_body.str();
 	_status_line.str(""); _headers.str(""); _response_body.str("");
 	return true;
-}
-
-void	Response::build_redirect(const std::string & uri, const std::string & location_path, const std::string & replacement) {
-	add_to_headers<std::string>("Location", replacement.substr(0, replacement.find("/$1")) + uri.substr(uri.find(location_path) + location_path.size()));
 }
 
 std::string	Response::get_content_type(const std::string & file_path) const {

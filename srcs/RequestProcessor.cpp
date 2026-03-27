@@ -14,7 +14,7 @@ RequestProcessor::RequestProcessor(const RequestProcessor & other) {
 }
 
 RequestProcessor&	RequestProcessor::operator=(const RequestProcessor & other) {
-	this->_res = other._res;
+	(void)other;
 	return *this;
 }
 
@@ -48,4 +48,11 @@ processing_result	RequestProcessor::process_request(ClientConnection & client) {
 	// find if allowed
 	if (std::find(loc->allowed_methods.begin(), loc->allowed_methods.end(), method) == loc->allowed_methods.end())
 		return NOT_ALLOWED;
+
+	if (method == "POST")
+		return POST_REQUEST;
+	else if (method == "DELETE")
+		return DELETE_REQUEST;
+	else 
+		return STATIC_FILE; 
 }

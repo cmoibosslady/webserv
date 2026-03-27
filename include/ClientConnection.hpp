@@ -10,16 +10,6 @@
 # include "Parser.hpp"
 # include "Response.hpp"
 
-enum request_type {
-	REDIRECT,
-	CGI,
-	STATIC_FILE,
-	UPLOAD,
-	DELETE,
-	AUTO_INDEX,
-	UNKNOWN
-};
-
 class ClientConnection : public Parser, public Response 
 {
 	private:
@@ -52,7 +42,7 @@ class ClientConnection : public Parser, public Response
 
 		client_status		processTransmit(void);
 
-		client_status		prepareResponse(request_type rq); 
+		// client_status		prepareResponse(request_type rq); 
 		exit_status			launch_execve(void);
 
 		client_status		send_response(void);
@@ -63,10 +53,7 @@ class ClientConnection : public Parser, public Response
 		client_status			_status;
 		time_t					_lastActivity;
 
-		const serverConfig		* _server;
-		const locationConfig	* _location;
-		const cgiConfig			* _cgi;
-		const rewriteConfig		*_rewrite;
+
 };
 
 #endif

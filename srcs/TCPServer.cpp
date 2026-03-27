@@ -6,6 +6,7 @@
 #include "cgiControler.hpp"
 #include "main.hpp"
 #include "main.tpp"
+#include "RequestProcessor.hpp"
 #include "TCPServer.hpp"
 
 bool	TCPServer::_close_server = false;
@@ -223,33 +224,30 @@ exit_status	TCPServer::handle_client_event(int fd) {
 exit_status	TCPServer::build_client_response(client_status &status) {
 	_client_ptr->setLocationConfig();
 
-	switch (_client_ptr->find_type_request()) {
-		case REDIRECT:
+	RequestProcessor	rq;
+	switch (rq.process_request(*_client_ptr)) {
+		case REDIRECTION:
 			log_info("Redirect detected");
-			status = _client_ptr->prepareResponse(REDIRECT);
+			status = _client_ptr->prepare_redirect(_client_ptr->get_uri());
 			break ;
-		case CGI:
+		case CGI_REQUEST:
 			log_info("CGI detected");
 			return prepare_cgi_process(_client_ptr->getFd());
-		case UPLOAD:
+		case POST_REQUEST:
 			log_info("Upload detected");
-			_client_ptr->prepareResponse(UPLOAD);
+			_client_ptr->prepare_post(_client_ptr->get_body());
 			break ;
-		case DELETE:
+		case DELETE_REQUEST:
 			log_info("Delete detected");
-			status = _client_ptr->prepareResponse(DELETE);
-			break ;
-		case AUTO_INDEX:
-			log_info("Autoindex detected");
-			status = _client_ptr->prepareResponse(AUTO_INDEX);
+			status = _client_ptr->prepare_delete();
 			break ;
 		case STATIC_FILE:
 			log_info("Static file detected");
-			status = _client_ptr->prepareResponse(STATIC_FILE);
+			status = _client_ptr->prepare_get();
 			break ;
-		case UNKNOWN:
+		case NOT_ALLOWED:
 			log_info("Unknown request type detected");
-			status = _client_ptr->prepareResponse(UNKNOWN);
+			_client_ptr->prepare_error_response(405);
 			break ;
 	}
 	return SUCCESS;
@@ -309,7 +307,7 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 			}
 			if (exit_status == 0) { // Exit was correct we can read the output of the CGI
 				_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
-				_client_ptr->prepareResponse(CGI);
+				_client_ptr->prepare_cgi();
 			}
 			else 
 			_client_ptr->prepare_error_response(exit_status);
@@ -341,5 +339,5 @@ void	TCPServer::kill_cgi(const int error_code) {
 	kill(_cgi_control_ptr->get_child_pid(), SIGKILL);
 	_poller.remove(_cgi_control_ptr->get_input_w_pipe());
 	_poller.remove(_cgi_control_ptr->get_output_r_pipe());
-	_client_ptr->prepareResponse(error_code);
+	_client_ptr->prepare_error_response(error_code);
 }
