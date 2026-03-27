@@ -106,6 +106,10 @@ void	ClientConnection::setLocationConfig() {
 	_location = 0;
 }
 
+const locationConfig *	ClientConnection::getLocation(void) const {
+	return _location;
+}
+
 std::string	ClientConnection::getLocationRoot() const {
 	if (_location && !_location->root.empty())
 		return _location->root;
@@ -117,83 +121,6 @@ void	ClientConnection::setBuffer(const std::string cgi_answer) {
 		_buffer = cgi_answer;
 	}
 }
-
-request_type	ClientConnection::find_type_request(void) {
-	if (!_location)
-		return UNKNOWN;
-	std::string uri = get_uri().substr(get_uri().find(_location->path) + _location->path.size());
-	
-	return UNKNOWN;
-}
-
-bool	ClientConnection::needs_redirect(void) {
-	std::string	uri = get_uri().substr(get_uri().find(_location->path) + _location->path.size());
-	
-	for (std::set<rewriteConfig>::const_iterator it = _location->rewrites.begin(); it != _location->rewrites.end(); ++it) {
-		log_debug<std::string>("Uri=" + uri, "pattern="+it->pattern);
-		if (uri == it->pattern) {
-			log_debug<std::string>("Replace by", it->replacement);
-			_rewrite = &(*it);
-			return true;	
-		}
-	}
-	_rewrite = NULL;
-	return false;
-}
-
-const cgiConfig *	ClientConnection::needs_cgi(void) const {
-	if (!_location || _location->cgi_configs.empty()) {
-		log_debug<std::string>("No cgi config found for URI: ", get_uri());
-		return NULL;
-	}
-	if (get_uri().find('.') == std::string::npos) {
-		log_debug<std::string>("No CGI dot extension founded for URI: ", get_uri());
-		return NULL;
-	}
-	std::string	uri_extension = get_uri().substr(get_uri().find_last_of('.'), get_uri().find_last_of('?') - get_uri().find_last_of('.'));
-	log_debug<std::string>("URI extension: ", uri_extension);
-	for (std::set<cgiConfig>::const_iterator it = _location->cgi_configs.begin(); it != _location->cgi_configs.end(); ++it) {
-		log_debug<std::string>("Checking CGI extension: ", it->extension);
-		if (it->extension == uri_extension) {
-			if (it->allowed_methods.find(get_method()) != it->allowed_methods.end())
-				return &(*it);
-		}
-	}
-	log_debug<std::string>("No CGI needed for URI: ", get_uri());
-	
-	return NULL;
-}
-
-bool	ClientConnection::needs_static_response(void) {
-	if (get_method() != "GET")
-		return false;
-	return true;
-}
-
-int		ClientConnection::get_on_file(void) {
-	if (!_location || _location->root.empty()) {
-		_status = prepareResponse(404);
-		return _status;
-	}
-	std::string uri_path = get_uri().substr(0, get_uri().find('?')); // on enleve la query '? et apres'
-	std::string relative_path = uri_path;
-	if (uri_path.find(_location->path) == 0)
-		relative_path = uri_path.substr(_location->path.size());
-	while (!relative_path.empty() && relative_path[0] == '/')
-		relative_path.erase(0, 1);
-	std::string file_path = _location->root;
-	if (!file_path.empty() && file_path[file_path.size() - 1] != '/')
-		file_path += '/';
-	file_path += relative_path;
-	if (access(file_path.c_str(), F_OK) != 0)
-		_status = prepareResponse(404);
-	else if (access(file_path.c_str(), R_OK) != 0)
-		_status = prepareResponse(403);
-	else
-		_status = prepareResponse(200);
-	return _status;
-}
-
 
 client_status	ClientConnection::processTransmit(void) {
 	log_info("Processing client data");

@@ -38,6 +38,7 @@ class ClientConnection : public Parser, public Response
 		const std::string &		get_uri(void) const;
 		const std::map<std::string, std::string> &	get_headers(void) const;
 		const std::string &		get_body(void) const;
+		const locationConfig *	getLocation(void) const;
 		std::string				getLocationRoot() const;
 		cgiConfig*				getCgiConfig() const;
 		int						getStatus() const;
@@ -51,7 +52,6 @@ class ClientConnection : public Parser, public Response
 
 		client_status		processTransmit(void);
 
-		request_type		find_type_request(void);
 		client_status		prepareResponse(request_type rq); 
 		exit_status			launch_execve(void);
 

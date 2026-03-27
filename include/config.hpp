@@ -14,6 +14,7 @@ struct rewriteConfig {
 	int			error_code;
 
 	bool operator<(const rewriteConfig& other) const;
+	bool operator==(const std::string & pattern) const; 
 };
 
 struct cgiConfig {
@@ -22,6 +23,7 @@ struct cgiConfig {
 
 	std::set<std::string> allowed_methods; // by default, no method is allowed
 	bool operator<(const cgiConfig& other) const;
+	bool operator==(const std::string &extension) const;
 };
 
 struct locationConfig {
