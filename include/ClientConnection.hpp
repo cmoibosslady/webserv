@@ -32,6 +32,8 @@ class ClientConnection : public Parser, public Response
 		std::string				getLocationRoot() const;
 		cgiConfig*				getCgiConfig() const;
 		int						getStatus() const;
+		std::string				getConnectionHeader(void) const;
+		std::string				getContentType(void) const;
 
 		void		setServerConfig(const serverConfig * config);
 		void		setLocationConfig();

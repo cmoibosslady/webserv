@@ -235,21 +235,24 @@ exit_status	TCPServer::build_client_response(client_status &status) {
 			return prepare_cgi_process(_client_ptr->getFd());
 		case POST_REQUEST:
 			log_info("Upload detected");
-			_client_ptr->prepare_post(_client_ptr->get_body());
+			status = _client_ptr->prepare_post(_client_ptr->get_uri(), _client_ptr->get_body(), _client_ptr->getContentType());
 			break ;
 		case DELETE_REQUEST:
 			log_info("Delete detected");
-			status = _client_ptr->prepare_delete();
+			status = _client_ptr->prepare_delete(_client_ptr->get_uri());
 			break ;
 		case STATIC_FILE:
 			log_info("Static file detected");
-			status = _client_ptr->prepare_get();
+			status = _client_ptr->prepare_get(_client_ptr->get_uri());
 			break ;
 		case NOT_ALLOWED:
 			log_info("Unknown request type detected");
 			_client_ptr->prepare_error_response(405);
+			status = SENDING_RESPONSE;
 			break ;
 	}
+	_client_ptr->finalize_response(_client_ptr->getConnectionHeader());
+	_poller.modify(_client_ptr->getFd(), POLLOUT);
 	return SUCCESS;
 }
 
@@ -306,11 +309,11 @@ exit_status	TCPServer::handle_cgi_event(int fd) {
 				exit_status = WEXITSTATUS(exit_status);
 			}
 			if (exit_status == 0) { // Exit was correct we can read the output of the CGI
-				_client_ptr->setBuffer(_cgi_control_ptr->get_received_data());
-				_client_ptr->prepare_cgi();
+				_client_ptr->prepare_cgi(_cgi_control_ptr->get_received_data());
 			}
 			else 
-			_client_ptr->prepare_error_response(exit_status);
+				_client_ptr->prepare_error_response(exit_status);
+			_client_ptr->finalize_response(_client_ptr->getConnectionHeader());
 			_poller.modify(_client_ptr->getFd(), POLLOUT);
 			close(fd);
 		}

@@ -104,18 +104,15 @@ void	Response::classic_http_hat(int http_code) {
 	const std::string empty_body;
 	log_debug<int>("Building response with HTTP code ", http_code);
 	_status_line << "HTTP/1.1 " << http_code << " " << get_reason_phrase(http_code) << "\r\n";
-	if (http_code >= 400)
-		prepare_error_content(http_code);
-	else
-		_response_body << empty_body;
 }
 
 void	Response::prepare_error_content(int http_code) {
-	if (_error_pages.find(http_code) == _error_pages.end()) {
+	if (_error_pages.find(http_code) != _error_pages.end()) {
 		if (access(_error_pages.at(http_code).c_str(), F_OK | R_OK) == -1) {
 			std::ifstream	ifs(_error_pages.at(http_code));
 			if (ifs.is_open()) {
 				_response_body << ifs;
+				ifs.close();
 				return ;
 			}
 		}
@@ -124,15 +121,47 @@ void	Response::prepare_error_content(int http_code) {
 	return ;
 }
 
+void	Response::prepare_error_response(int http_code) {
+	classic_http_hat(http_code);
+	prepare_error_content(http_code);
+}
+
 /// Prepare content of response
 
-void	Response::prepare_redirect(const std::string & uri) {
+client_status	Response::prepare_redirect(const std::string & uri) {
 	log_info("Preparing response for redirect");
 	classic_http_hat(_rewrite->error_code);
 
 	const std::string & replacm = _rewrite->replacement;
 	add_to_headers<std::string>("Location", replacm.substr(0, replacm.find("/$1")) + uri.substr(uri.find(_location->path) + _location->path.size()));
+	return SENDING_RESPONSE;
+}
 
+client_status 	Response::prepare_post(const std::string &uri, const std::string &body, const std::string &body_type) {
+	log_info("Preparing response for POST");
+	if (body.size() > _server->client_max_body_size) {
+		prepare_error_response(413);
+		return SENDING_RESPONSE;
+	}
+	std::string file_path = uri.substr(0, uri.find("?"));
+	if (body_type.substr(0, body_type.find(";")) == "multipart/form-data") {
+		// go for upload
+	}
+	else {
+		if (access(file_path.c_str(), F_OK | W_OK) == -1) {
+		// modify file
+			prepare_error_response()
+		}
+	}
+	return SENDING_RESPONSE;
+}
+
+void	Response::prepare_cgi(const std::string &cgi_answer) {
+	log_info("Preparing response after CGI");
+	classic_http_hat(200);
+	
+	add_to_headers<std::string>("Content-type", "text/html");
+	_response_body << cgi_answer;
 }
 
 
@@ -143,15 +172,7 @@ void	Response::setErrorPages(const std::map<int, std::string> &error_pages) {
 	_error_pages = error_pages;
 }
 
-bool Response::build_response(const std::string content, const int http_code, std::string co_status) {
-	log_debug<std::string>("Content is", _response_body.str());
-
-	if (_response_body.str().empty() && http_code >= 400 && http_code <= 599) {
-		log_error("an error has been detected");
-		_response_body << build_default_error_page(http_code);
-	}
-
-
+bool Response::finalize_response(std::string co_status) {
 	add_to_headers<size_t>("Content-Length", _response_body.str().size());
 	add_to_headers<std::string>("Connection", co_status);
 	_response = _status_line.str() + _headers.str() + "\r\n" + _response_body.str();

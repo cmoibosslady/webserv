@@ -20,17 +20,18 @@ class Response {
 
 		void	clean_fd(void);
 
-		void	prepare_redirect(const std::string &uri);
-		client_status	prepare_post(const std::string &body);
-		client_status	prepare_delete(void);
-		client_status	prepare_get(void);
+		client_status	prepare_redirect(const std::string &uri);
+		client_status	prepare_post(const std::string &uri, const std::string &body, const std::string &body_type);
+		client_status	prepare_delete(const std::string &uri);
+		client_status	prepare_get(const std::string &uri);
 
-		void			prepare_cgi(void);
+		void			prepare_cgi(const std::string &cgi_answer);
 		void			prepare_error_response(int http_code);
+
+		bool			finalize_response(std::string co_status);
 
 	protected:
 		void			setErrorPages(const std::map<int, std::string> &error_pages);
-		bool			build_response(const std::string content, const int http_code, std::string co_status);
 		
 
 
