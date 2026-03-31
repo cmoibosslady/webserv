@@ -30,13 +30,15 @@ class ClientConnection : public Parser, public Response
 		const std::string &		get_body(void) const;
 		const locationConfig *	getLocation(void) const;
 		std::string				getLocationRoot() const;
-		cgiConfig*				getCgiConfig() const;
+		const cgiConfig &		getCgiConfig() const;
 		int						getStatus() const;
 		std::string				getConnectionHeader(void) const;
 		std::string				getContentType(void) const;
 
 		void		setServerConfig(const serverConfig * config);
-		void		setLocationConfig();
+		void		setLocationConfig(void);
+		void		setRedirect(const rewriteConfig & redirect);
+		void		setCgiConfig(const cgiConfig & cgi);
 		void		setBuffer(const std::string cgi_answer);
 
 		void		updateLastActivity(void);

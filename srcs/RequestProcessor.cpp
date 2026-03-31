@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 
 #include "ClientConnection.hpp"
@@ -34,8 +35,10 @@ processing_result	RequestProcessor::process_request(ClientConnection & client) {
 	
 	// find if a redirect
 	std::set<rewriteConfig>::const_iterator it = std::find(loc->rewrites.begin(), loc->rewrites.end(), uri);
-	if (it != loc->rewrites.end())
+	if (it != loc->rewrites.end()) {
+		client.setRedirect(*it);
 		return REDIRECTION;
+	}
 
 	// find if a cgi
 	std::string method = client.get_method();
@@ -43,7 +46,10 @@ processing_result	RequestProcessor::process_request(ClientConnection & client) {
 		std::string extension = uri.substr(uri.find_last_of("."));
 		std::set<cgiConfig>::const_iterator it = std::find(loc->cgi_configs.begin(), loc->cgi_configs.end(), extension);
 		if (it != loc->cgi_configs.end() && std::find(it->allowed_methods.begin(), it->allowed_methods.end(), method) != it->allowed_methods.end())
+		{
+			client.setCgiConfig(*it);
 			return CGI_REQUEST;
+		}
 	}
 
 	// find if allowed

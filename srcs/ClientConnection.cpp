@@ -78,7 +78,7 @@ void	ClientConnection::setServerConfig(const serverConfig * config) {
 	setErrorPages(_server->error_pages);
 }
 
-void	ClientConnection::setLocationConfig() {
+void	ClientConnection::setLocationConfig(void) {
 	if (!_server)
 		return;
 	log_debug<int>("Server port: ", _server->port);
@@ -104,6 +104,18 @@ void	ClientConnection::setLocationConfig() {
 		}
 	}
 	_location = 0;
+}
+
+void	ClientConnection::setRedirect(const rewriteConfig & redirect) {
+	_rewrite = &redirect;
+}
+
+void	ClientConnection::setCgiConfig(const cgiConfig & cgi) {
+	_cgi = &cgi;
+}
+
+const cgiConfig &	ClientConnection::getCgiConfig(void) const {
+	return *_cgi;
 }
 
 const locationConfig *	ClientConnection::getLocation(void) const {

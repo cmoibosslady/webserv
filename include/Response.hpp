@@ -18,7 +18,7 @@ class Response {
 		Response & operator=(const Response & other);
 		~Response(void);
 
-		void	clean_fd(void);
+		void	clean_response(void);
 
 		client_status	prepare_redirect(const std::string &uri);
 		client_status	prepare_post(const std::string &uri, const std::string &body, const std::string &body_type);

@@ -96,8 +96,12 @@ Response::~Response(void) {
 	// log_info("Response destructor called");
 }
 
-void	Response::clean_fd(void) {
+void	Response::clean_response(void) {
 	_fd = -1;
+	_status_line.flush();
+	_headers.flush();
+	_response_body.flush();
+	_response.clear();
 }
 
 void	Response::classic_http_hat(int http_code) {
@@ -109,7 +113,7 @@ void	Response::classic_http_hat(int http_code) {
 void	Response::prepare_error_content(int http_code) {
 	if (_error_pages.find(http_code) != _error_pages.end()) {
 		if (access(_error_pages.at(http_code).c_str(), F_OK | R_OK) == -1) {
-			std::ifstream	ifs(_error_pages.at(http_code));
+			std::ifstream	ifs(_error_pages.at(http_code).c_str());
 			if (ifs.is_open()) {
 				_response_body << ifs;
 				ifs.close();
@@ -178,7 +182,7 @@ client_status	Response::prepare_get(const std::string &uri) {
 	file_path = file_path.substr(file_path.find(_location->path) + _location->path.size());
 	file_path = _location->root + file_path;
 	log_debug<std::string>("Prepared file path for GET: ", file_path);
-	if (file_path.back() == '/') {
+	if (file_path.at(file_path.size() - 1) == '/') {
 		if (_location->autoindex == true) {
 			// construct autoindex page
 		}

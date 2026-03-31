@@ -115,7 +115,6 @@ int	TCPServer::wait(void) {
 void	TCPServer::close_client_connection(std::string msg, int fd) {
 	log_warning<int>("Closing client connection. Cause: " + msg, fd);
 	_poller.remove(fd);
-	_client_ptr->clean_fd();
 	_clients.erase(std::remove(_clients.begin(), _clients.end(), *_client_ptr)); // Check if does erase correctly the clients from the server vector
 	_client_ptr = NULL;
 	close(fd);
@@ -202,6 +201,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 					status = CLOSING;
 			}
 			catch (std::out_of_range & e) { close_client_connection("Close in header", fd); }
+			_client_ptr->clean_response();
 		}
 	}
 	if (status == CLOSING || status == RECV_FAILURE || status == SEND_FAILURE) {
@@ -272,7 +272,7 @@ exit_status	TCPServer::prepare_cgi_process(const int fd) {
 		return FORK_FAILURE;
 	}
 	if (cgi_pid == 0) { // child process
-		cgi.build_envp(*_client_ptr, *_cgi_config_ptr);
+		cgi.build_envp(*_client_ptr, _client_ptr->getCgiConfig());
 		return cgi.execute_cgi();
 	}
 	else { // parent process

@@ -54,7 +54,6 @@ class TCPServer {
 		Socket				*_socket_ptr;
 		ClientConnection	*_client_ptr;
 		CGIControler		*_cgi_control_ptr;
-		const cgiConfig		*_cgi_config_ptr;
 };
 
 #endif
