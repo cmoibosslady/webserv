@@ -10,6 +10,7 @@ enum processing_result {
 	CGI_REQUEST,
 	REDIRECTION,
 	NOT_ALLOWED,
+	NOT_FOUND
 };
 
 class RequestProcessor {

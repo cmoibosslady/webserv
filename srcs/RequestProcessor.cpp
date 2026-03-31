@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <string>
+#include <unistd.h>
 
 #include "ClientConnection.hpp"
 #include "main.hpp"
@@ -40,6 +41,8 @@ processing_result	RequestProcessor::process_request(ClientConnection & client) {
 		return REDIRECTION;
 	}
 
+	// find if file exist
+
 	// find if a cgi
 	std::string method = client.get_method();
 	if (uri.find(".") != std::string::npos) {
@@ -47,11 +50,12 @@ processing_result	RequestProcessor::process_request(ClientConnection & client) {
 		std::set<cgiConfig>::const_iterator it = std::find(loc->cgi_configs.begin(), loc->cgi_configs.end(), extension);
 		if (it != loc->cgi_configs.end() && std::find(it->allowed_methods.begin(), it->allowed_methods.end(), method) != it->allowed_methods.end())
 		{
+			if (access((loc->root + uri).c_str(), F_OK) == -1)
+				return NOT_FOUND;
 			client.setCgiConfig(*it);
 			return CGI_REQUEST;
 		}
 	}
-
 	// find if allowed
 	if (std::find(loc->allowed_methods.begin(), loc->allowed_methods.end(), method) == loc->allowed_methods.end())
 		return NOT_ALLOWED;

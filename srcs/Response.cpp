@@ -1,6 +1,7 @@
 #include <cctype>
 #include <fstream>
 #include <sstream>
+#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include "main.tpp"
@@ -97,7 +98,6 @@ Response::~Response(void) {
 }
 
 void	Response::clean_response(void) {
-	_fd = -1;
 	_status_line.flush();
 	_headers.flush();
 	_response_body.flush();
@@ -121,6 +121,7 @@ void	Response::prepare_error_content(int http_code) {
 			}
 		}
 	}
+	log_info("No pages found for this error");
 	_response_body << build_default_error_page(http_code);
 	return ;
 }
@@ -191,7 +192,11 @@ client_status	Response::prepare_get(const std::string &uri) {
 			return SENDING_RESPONSE;
 		}
 		for (std::set<std::string>::const_iterator it = _location->index_files.begin(); it != _location->index_files.end(); ++it) {
-			// add multiple files to request anzwer and how to do that ?
+			std::string index_file = file_path + *it;
+			if (access(index_file.c_str(), F_OK) != -1) {
+				file_path = index_file;
+				break ;
+			}
 		}
 	}
 	if (access(file_path.c_str(), F_OK) == -1) {
@@ -271,6 +276,7 @@ client_status Response::send_response(void) {
 	}
 	ssize_t	bytes_send = send(_fd, _response.c_str(), _response.size(), MSG_NOSIGNAL);
 	if (bytes_send == -1) {
+		log_error(strerror(errno));
 		log_error("Failed to send response to client");
 		return WAITING;
 	}

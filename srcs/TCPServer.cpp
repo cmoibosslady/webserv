@@ -195,12 +195,11 @@ exit_status	TCPServer::handle_client_event(int fd) {
 		status = _client_ptr->send_response();
 		if (status == WAITING) {
 			try { 
-				if (_client_ptr->get_headers().at("Connection") == "keep-alive")
+				if (_client_ptr->get_headers().at("Connection") == "keep-alive\r")
 					_poller.modify(fd, POLLIN);
-				else
-					status = CLOSING;
+				else { status = CLOSING; log_info("In headers, no keep-alive found"); }
 			}
-			catch (std::out_of_range & e) { close_client_connection("Close in header", fd); }
+			catch (std::out_of_range & e) { status = CLOSING; log_info("Connection not found in headers"); }
 			_client_ptr->clean_response();
 		}
 	}
@@ -248,6 +247,11 @@ exit_status	TCPServer::build_client_response(client_status &status) {
 		case NOT_ALLOWED:
 			log_info("Unknown request type detected");
 			_client_ptr->prepare_error_response(405);
+			status = SENDING_RESPONSE;
+			break ;
+		case NOT_FOUND:
+			log_info("File not found");
+			_client_ptr->prepare_error_response(404);
 			status = SENDING_RESPONSE;
 			break ;
 	}
