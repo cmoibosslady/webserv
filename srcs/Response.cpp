@@ -1,9 +1,12 @@
 #include <cctype>
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
+
 #include "main.tpp"
 #include "Response.hpp"
 
@@ -131,6 +134,35 @@ void	Response::prepare_error_response(int http_code) {
 	prepare_error_content(http_code);
 }
 
+void	Response::prepare_auto_index(const std::string &uri, const std::string &dir_path) {
+	DIR *dir = opendir(dir_path.c_str());
+	if (dir == NULL) { prepare_error_response(500); return ; }
+	classic_http_hat(200);
+	_response_body << "<!DOCTYPE html><html><head><title>Index of " 
+		<< uri << "</title></head><body>"
+		<< "<h1>Index of " << uri << "</h1>"
+		<< "<hr><pre>" ;
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL) {
+		std::string name = entry->d_name;
+		if (name == ".") { continue ; }
+		std::string display_name = name;
+		if (entry->d_type == DT_DIR) { display_name += "/"; }
+		std::string href;
+		if (name == "..") { href = name; }
+		else {
+			std::string base_uri = uri;
+			if (!base_uri.empty() && base_uri[base_uri.size() - 1] != '/') { base_uri += "/"; }
+			href = base_uri + name;
+			if (entry->d_type == DT_DIR) { href += "/"; }
+		}
+		_response_body << "<a href=\"" << href << "\">" << display_name << "</a>" << std::endl; 
+	}
+	closedir(dir);
+	_response_body << "</pre><hr></body></html>";
+}
+
 /// Prepare content of response
 
 client_status	Response::prepare_redirect(const std::string & uri) {
@@ -185,7 +217,8 @@ client_status	Response::prepare_get(const std::string &uri) {
 	log_debug<std::string>("Prepared file path for GET: ", file_path);
 	if (file_path.at(file_path.size() - 1) == '/') {
 		if (_location->autoindex == true) {
-			// construct autoindex page
+			prepare_auto_index(uri.substr(0, uri.find("?")), file_path);
+			return SENDING_RESPONSE;
 		}
 		if (_location->index_files.empty()) {
 			prepare_error_response(403);

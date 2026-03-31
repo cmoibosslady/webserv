@@ -27,6 +27,7 @@ class Response {
 
 		void			prepare_cgi(const std::string &cgi_answer);
 		void			prepare_error_response(int http_code);
+		void			prepare_auto_index(const std::string &uri, const std::string &dir_path);
 
 		bool			finalize_response(std::string co_status);
 
