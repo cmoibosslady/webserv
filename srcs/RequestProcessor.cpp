@@ -2,6 +2,7 @@
 
 #include "ClientConnection.hpp"
 #include "main.hpp"
+#include "main.tpp"
 #include "RequestProcessor.hpp"
 
 RequestProcessor::RequestProcessor(void) {

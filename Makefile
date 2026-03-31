@@ -29,6 +29,7 @@ SRCS = main.cpp \
 	   overload_config.cpp \
 	   Parser.cpp \
 	   Poller.cpp \
+	   RequestProcessor.cpp \
 	   Response.cpp \
 	   Socket.cpp \
 	   stoul.cpp \
@@ -43,6 +44,7 @@ HEADER =  main.hpp \
 		  ft_mem.hpp \
 		  Parser.hpp \
 		  Poller.hpp \
+		  RequestProcessor.hpp \
 		  Response.hpp \
 		  Socket.hpp \
 		  stoul.hpp \

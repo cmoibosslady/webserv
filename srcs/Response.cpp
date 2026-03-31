@@ -43,11 +43,11 @@ case 502: return "Bad Gateway";
 	}
 }
 
-static bool	status_has_body(int http_code) {
-	if ((http_code >= 100 && http_code < 200) || http_code == 204 || http_code == 304)
-		return false;
-	return true;
-}
+// static bool	status_has_body(int http_code) {
+// 	if ((http_code >= 100 && http_code < 200) || http_code == 204 || http_code == 304)
+// 		return false;
+// 	return true;
+// }
 
 static std::string	to_lower_copy(const std::string & input) {
 	std::string out = input;
@@ -146,14 +146,70 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 	std::string file_path = uri.substr(0, uri.find("?"));
 	if (body_type.substr(0, body_type.find(";")) == "multipart/form-data") {
 		// go for upload
+		log_info("Handling multipart/form-data for file upload");
 	}
 	else {
 		if (access(file_path.c_str(), F_OK | W_OK) == -1) {
 		// modify file
-			prepare_error_response()
+			prepare_error_response(403);
+			return SENDING_RESPONSE;
 		}
 	}
+	classic_http_hat(200);
 	return SENDING_RESPONSE;
+}
+
+client_status	Response::prepare_delete(const std::string &uri) {
+	std::string file_path = uri.substr(0, uri.find("?"));
+	if (access(file_path.c_str(), F_OK | W_OK) == -1) {
+		prepare_error_response(403);
+		return SENDING_RESPONSE;
+	}
+	if (remove(file_path.c_str()) == -1) {
+		prepare_error_response(500);
+		return SENDING_RESPONSE;
+	}
+	classic_http_hat(200);
+	return SENDING_RESPONSE;
+}
+
+client_status	Response::prepare_get(const std::string &uri) {
+	std::string file_path = uri.substr(0, uri.find("?"));
+	file_path = file_path.substr(file_path.find(_location->path) + _location->path.size());
+	file_path = _location->root + file_path;
+	log_debug<std::string>("Prepared file path for GET: ", file_path);
+	if (file_path.back() == '/') {
+		if (_location->autoindex == true) {
+			// construct autoindex page
+		}
+		if (_location->index_files.empty()) {
+			prepare_error_response(403);
+			return SENDING_RESPONSE;
+		}
+		for (std::set<std::string>::const_iterator it = _location->index_files.begin(); it != _location->index_files.end(); ++it) {
+			// add multiple files to request anzwer and how to do that ?
+		}
+	}
+	if (access(file_path.c_str(), F_OK) == -1) {
+		prepare_error_response(404);
+		return SENDING_RESPONSE;
+	}
+	if (access(file_path.c_str(), R_OK) == -1) {
+		prepare_error_response(403);
+		return SENDING_RESPONSE;
+	}
+	std::ifstream	ifs(file_path.c_str());
+	if (ifs.is_open()) {
+		classic_http_hat(200);
+		add_to_headers<std::string>("Content-type", get_content_type(file_path));
+		_response_body << ifs.rdbuf();
+		ifs.close();
+		return SENDING_RESPONSE;
+	}
+	else {
+		prepare_error_response(500);
+		return SENDING_RESPONSE;
+	}
 }
 
 void	Response::prepare_cgi(const std::string &cgi_answer) {
