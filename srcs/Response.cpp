@@ -115,10 +115,10 @@ void	Response::classic_http_hat(int http_code) {
 
 void	Response::prepare_error_content(int http_code) {
 	if (_error_pages.find(http_code) != _error_pages.end()) {
-		if (access(_error_pages.at(http_code).c_str(), F_OK | R_OK) == -1) {
+		if (access(_error_pages.at(http_code).c_str(), F_OK | R_OK) != -1) {
 			std::ifstream	ifs(_error_pages.at(http_code).c_str());
 			if (ifs.is_open()) {
-				_response_body << ifs;
+				_response_body << ifs.rdbuf();;
 				ifs.close();
 				return ;
 			}
