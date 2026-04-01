@@ -122,9 +122,12 @@ void	Response::prepare_error_content(int http_code) {
 				ifs.close();
 				return ;
 			}
+			log_error("Error page is not open");
 		}
+		log_error("Cannot access error page: " + _error_pages.at(http_code));
 	}
 	log_info("No pages found for this error");
+	log_debug<size_t>("Size of error pages", _error_pages.size());
 	_response_body << build_default_error_page(http_code);
 	return ;
 }
@@ -213,6 +216,8 @@ client_status	Response::prepare_delete(const std::string &uri) {
 client_status	Response::prepare_get(const std::string &uri) {
 	std::string file_path = uri.substr(0, uri.find("?"));
 	file_path = file_path.substr(file_path.find(_location->path) + _location->path.size());
+	if (file_path[0] == '/')
+		file_path.erase(0, 1);
 	file_path = _location->root + file_path;
 	log_debug<std::string>("Prepared file path for GET: ", file_path);
 	if (file_path.at(file_path.size() - 1) == '/') {
