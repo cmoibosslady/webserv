@@ -93,6 +93,7 @@ Response & Response::operator=(const Response & other) {
 	this->_rewrite = other._rewrite;
 	this->_fd = other._fd;
 	this->_response = other._response;
+	this->_error_pages = other._error_pages;
 	return *this;
 }
 
