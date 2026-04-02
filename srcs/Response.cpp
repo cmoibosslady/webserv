@@ -282,7 +282,7 @@ void	Response::prepare_cgi(const std::string &cgi_answer) {
 			break ; // end of headers
 		if (line.find("Status: ") != std::string::npos) {
 			int http_code;
-			try { http_code = std::stoi(line.substr(line.find("Status: ") + sizeof("Status: "))); }
+			try { http_code = std::atoi(line.substr(line.find("Status: ") + sizeof("Status: ")).c_str()); }
 			catch (std::exception & e) {  }
 			classic_http_hat(http_code);
 		}
