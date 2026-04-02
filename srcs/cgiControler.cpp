@@ -200,7 +200,7 @@ bool	CGIControler::feed_cgi_process(void) {
 		log_error("Failed to write to CGI process");
 		return false;
 	}
-	_sent_data.erase(0, bytes_written);
+	_sent_data.erase(0, static_cast<size_t>(bytes_written));
 	return _sent_data.empty();
 }
 

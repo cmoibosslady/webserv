@@ -123,7 +123,7 @@ bool	Parser::unchunk_body(void) {
 		}
 		std::string chunk_data;
 		chunk_data.resize(chunk_size);
-		ss.read(&chunk_data[0], chunk_size);
+		ss.read(&chunk_data[0], static_cast<long>(chunk_size)); //is it a problem?
 		if (ss.gcount() != static_cast<std::streamsize>(chunk_size)) {
 			log_warning("Chunk size mismatch: expected ", chunk_size);
 			return false; // Malformed chunk

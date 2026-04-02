@@ -24,9 +24,9 @@ bool	cgiConfig::operator==(const std::string &extension) const {
 }
 
 bool	rewriteConfig::operator==(const std::string &pattern) const {
-		if (this->pattern == pattern)
-			return true;
-		else
-			return false;
-	};
+	if (this->pattern == pattern)
+		return true;
+	else
+		return false;
+}
 

@@ -23,7 +23,7 @@ int config::addPort(Tokeniser &tokeniser, serverConfig &server) const {
 		return -1;
 	}
 	int port;
-	try { port = ft_stoul(token.value); }
+	try { port = static_cast<int>(ft_stoul(token.value)); }
 	catch (const std::exception &e) {
 		log_error<std::string>("Invalid port number: " + token.value + tokeniser.getLineContext());
 		return -1;
@@ -43,7 +43,7 @@ int config::addErrorPage(Tokeniser &tokeniser, serverConfig &server) const {
 		return -1;
 	}
 	int error_code;
-	try { error_code = ft_stoul(token.value); }
+	try { error_code = static_cast<int>(ft_stoul(token.value)); }
 	catch (const std::exception &e) {
 		log_error<std::string>("Invalid error code: " + token.value + tokeniser.getLineContext());
 		return -1;

@@ -113,5 +113,5 @@ int	Socket::get_port(int fd) {
 	socklen_t len = sizeof(sck);
 	getsockname(fd, &sck, &len);
 	unsigned int port = ntohs(((struct sockaddr_in *)&sck)->sin_port);
-	return port;
+	return static_cast<int>(port);
 }
