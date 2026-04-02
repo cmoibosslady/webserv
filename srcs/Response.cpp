@@ -187,7 +187,10 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 	}
 	std::string file_path = uri.substr(0, uri.find("?"));
 	if (body_type.substr(0, body_type.find(";")) == "multipart/form-data") {
-		// go for uploa
+		if (_location->upload_auth == false) {
+			prepare_error_response(403);
+			return SENDING_RESPONSE;
+		}
 	}
 	else {
 		if (access(file_path.c_str(), F_OK | W_OK) == -1) {
