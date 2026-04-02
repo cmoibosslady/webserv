@@ -4,7 +4,7 @@ MAKEFLAGS += --no-print-directory
 
 CC = c++
 
-CFLAGS = -Wall -Wextra -Werror -MMD -MP -std=c++98 -g -Wpedantic -Werror=implicit-function-declaration -Wconversion
+CFLAGS = -Wall -Wextra -Werror -MMD -MP -std=c++98 -g -Wpedantic -Werror=implicit-function-declaration #-D_FORTIFY_SOURCE=2  #-Wconversion
 
 NAME = webserv
 

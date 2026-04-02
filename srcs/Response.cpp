@@ -1,4 +1,5 @@
 #include <cctype>
+#include <cstdlib>
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
@@ -270,6 +271,8 @@ void	Response::prepare_cgi(const std::string &cgi_answer) {
 	log_debug<std::string>("CGI output", cgi_answer);
 	
 	if (is_raw_cgi(cgi_answer) == true) {
+		_status_line << "HTTP/1.1 200 CGI OK\r\n";
+		add_to_headers<std::string>("Content-type", "application/octet-stream");
 		_response_body << cgi_answer;
 		return ;
 	}
@@ -278,16 +281,16 @@ void	Response::prepare_cgi(const std::string &cgi_answer) {
 	std::string line;
 	// SUPPOSING CGI ARE HTTP ENCODED
 	while (std::getline(output, line)) {
-		if (line.empty())
+		if (line == "\r")
 			break ; // end of headers
 		if (line.find("Status: ") != std::string::npos) {
-			int http_code;
-			try { http_code = std::atoi(line.substr(line.find("Status: ") + sizeof("Status: ")).c_str()); }
-			catch (std::exception & e) {  }
-			classic_http_hat(http_code);
+			classic_http_hat(std::atoi(line.substr(line.find("Status: ") + 8).c_str()));
 		}
-
+		else {
+			_headers << line << "\r\n";
+		}
 	}
+	_response_body << output.rdbuf();
 }
 
 
