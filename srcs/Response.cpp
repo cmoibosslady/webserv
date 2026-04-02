@@ -186,8 +186,7 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 	}
 	std::string file_path = uri.substr(0, uri.find("?"));
 	if (body_type.substr(0, body_type.find(";")) == "multipart/form-data") {
-		// go for upload
-		log_info("Handling multipart/form-data for file upload");
+		// go for uploa
 	}
 	else {
 		if (access(file_path.c_str(), F_OK | W_OK) == -1) {
@@ -260,12 +259,35 @@ client_status	Response::prepare_get(const std::string &uri) {
 	}
 }
 
+bool	Response::is_raw_cgi(const std::string &cgi_answer) {
+	if (cgi_answer.find("Status: ") < cgi_answer.find("\r\n"))
+		return false;
+	return true;
+}
+
 void	Response::prepare_cgi(const std::string &cgi_answer) {
 	log_info("Preparing response after CGI");
-	classic_http_hat(200);
+	log_debug<std::string>("CGI output", cgi_answer);
 	
-	add_to_headers<std::string>("Content-type", "text/html");
-	_response_body << cgi_answer;
+	if (is_raw_cgi(cgi_answer) == true) {
+		_response_body << cgi_answer;
+		return ;
+	}
+
+	std::stringstream output(cgi_answer);
+	std::string line;
+	// SUPPOSING CGI ARE HTTP ENCODED
+	while (std::getline(output, line)) {
+		if (line.empty())
+			break ; // end of headers
+		if (line.find("Status: ") != std::string::npos) {
+			int http_code;
+			try { http_code = std::stoi(line.substr(line.find("Status: ") + sizeof("Status: "))); }
+			catch (std::exception & e) {  }
+			classic_http_hat(http_code);
+		}
+
+	}
 }
 
 
@@ -319,12 +341,12 @@ client_status Response::send_response(void) {
 		log_error("Failed to send response to client");
 		return WAITING;
 	}
-	log_debug<size_t>("Response size", _response.size());
-	log_debug<ssize_t>("Bytes send", bytes_send);
+	// log_debug<size_t>("Response size", _response.size());
+	// log_debug<ssize_t>("Bytes send", bytes_send);
 	if (static_cast<size_t>(bytes_send) == _response.size())
 		return WAITING;
 	size_t	by = static_cast<size_t>(bytes_send);
-	log_debug<size_t>("Size_t bytes", by);
+	// log_debug<size_t>("Size_t bytes", by);
 	_response.erase(0, by);
 	return SENDING_RESPONSE;
 }

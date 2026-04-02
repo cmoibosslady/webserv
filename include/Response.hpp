@@ -53,6 +53,7 @@ class Response {
 		
 		void	classic_http_hat(int http_code);
 		void	prepare_error_content(int http_code);
+		bool	is_raw_cgi(const std::string & cgi_answer);
 
 		std::stringstream		_status_line; // careful same attributes inside parser..
 		std::stringstream		_headers;
