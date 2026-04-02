@@ -185,14 +185,29 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 		prepare_error_response(413);
 		return SENDING_RESPONSE;
 	}
-	std::string file_path = uri.substr(0, uri.find("?"));
+	std::string file_path = uri.substr(uri.find(_location->path) + _location->path.size(), uri.find("?"));
+	log_debug<std::string>("File path for POST request", file_path);
+	log_debug<std::string>("with body type", body_type);
 	if (body_type.substr(0, body_type.find(";")) == "multipart/form-data") {
 		if (_location->upload_auth == false) {
 			prepare_error_response(403);
 			return SENDING_RESPONSE;
 		}
+		// go for upload
+		file_path = _location->upload_path + file_path;
+		log_warning<std::string>("Trying to create new file", file_path);
+		std::ofstream	new_file(file_path);
+		if (new_file.fail()) {
+			prepare_error_response(500);
+			return SENDING_RESPONSE;
+		}
+		new_file << body;
+		new_file.close();
+		classic_http_hat(201);
+		return SENDING_RESPONSE;
 	}
 	else {
+		log_info("So not an upload");
 		if (access(file_path.c_str(), F_OK | W_OK) == -1) {
 		// modify file
 			prepare_error_response(403);
@@ -270,8 +285,8 @@ bool	Response::is_raw_cgi(const std::string &cgi_answer) {
 }
 
 void	Response::prepare_cgi(const std::string &cgi_answer) {
-	log_info("Preparing response after CGI");
-	log_debug<std::string>("CGI output", cgi_answer);
+	// log_info("Preparing response after CGI");
+	// log_debug<std::string>("CGI output", cgi_answer);
 	
 	if (is_raw_cgi(cgi_answer) == true) {
 		_status_line << "HTTP/1.1 200 CGI OK\r\n";
@@ -336,7 +351,7 @@ std::string	Response::get_content_type(const std::string & file_path) const {
 }
 
 client_status Response::send_response(void) {
-	log_warning<std::string>("Sending response to client fd ", _response);
+	// log_warning<std::string>("Sending response to client fd ", _response);
 	if (_response.empty()) {
 		log_error("Response is empty, nothing to send");
 		return WAITING;
