@@ -194,6 +194,8 @@ exit_status	TCPServer::handle_client_event(int fd) {
 	}
 	else if (revents & POLLIN) {
 		status = _client_ptr->processTransmit();
+		if (status == READING_BODY)
+			return SUCCESS;
 	}
 	else if (revents & POLLOUT) {
 		status = _client_ptr->send_response();
@@ -217,7 +219,7 @@ exit_status	TCPServer::handle_client_event(int fd) {
 			return EXECVE_FAILURE;
 		}
 	}
-	if (status == SENDING_RESPONSE) {
+	else if (status == SENDING_RESPONSE) {
 		log_info("Sending response to client");
 		_poller.modify(fd, POLLOUT);
 	}

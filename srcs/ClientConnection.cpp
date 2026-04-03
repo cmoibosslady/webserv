@@ -153,16 +153,14 @@ void	ClientConnection::setBuffer(const std::string cgi_answer) {
 client_status	ClientConnection::processTransmit(void) {
 	log_info("Processing client data");
 	char buffer[BUFFER_SIZE];
-	ft_memset(buffer, 0, BUFFER_SIZE);
-	ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE - 1, 0);
+	ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE, 0);
 	if (bytesRead == 0)
 		return CLOSING;
 	if (bytesRead < 0) {
 		log_error("Error reading from client socket");
 		return RECV_FAILURE;
 	}
-	_buffer += std::string(buffer);
-	// log_debug<std::string>("Received data: ", _buffer);
+	_buffer.append(buffer, static_cast<size_t>(bytesRead));
 	if (_status == WAITING && _buffer.find("\r\n") != std::string::npos) {
 		_status = parse_request_line(_buffer.substr(0, _buffer.find("\r\n")));
 		_buffer.erase(0, _buffer.find("\r\n") + 2);
@@ -180,6 +178,8 @@ client_status	ClientConnection::processTransmit(void) {
 				return BAD_REQUEST;
 			}
 		}
+		if (get_body().size() > _server->client_max_body_size)
+			return BUILDING_RESPONSE;
 	}
 	return _status;
 }

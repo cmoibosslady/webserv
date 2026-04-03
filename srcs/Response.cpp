@@ -182,6 +182,8 @@ client_status	Response::prepare_redirect(const std::string & uri) {
 client_status 	Response::prepare_post(const std::string &uri, const std::string &body, const std::string &body_type) {
 	log_info("Preparing response for POST");
 	if (body.size() > _server->client_max_body_size) {
+		log_debug<size_t>("Body size is", body.size());
+		log_debug<size_t>("Client max body size is", _server->client_max_body_size);
 		prepare_error_response(413);
 		return SENDING_RESPONSE;
 	}

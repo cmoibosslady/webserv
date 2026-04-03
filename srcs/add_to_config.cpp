@@ -73,6 +73,15 @@ int	config::addClientMaxBodySize(Tokeniser &tokeniser, serverConfig &server) con
 		log_error<std::string>("Invalid size value: " + token.value + tokeniser.getLineContext());
 		return -1;
 	}
+	int i = 0;
+	while (std::isdigit(token.value[i]) == true)
+		++i;
+	if (token.value[i] == 'k' || token.value[i] == 'K')
+		size *= 1000;
+	else if (token.value[i] == 'm' || token.value[i] == 'M')
+		size *= 1000000;
+	else if (token.value[i] == 'g' || token.value[i] == 'G')
+		size *= 1000000000;
 	server.client_max_body_size = size;
 	return consumeSemicolon(tokeniser);
 }
