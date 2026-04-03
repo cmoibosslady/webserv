@@ -193,7 +193,6 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 			prepare_error_response(403);
 			return SENDING_RESPONSE;
 		}
-		// go for upload
 		file_path = _location->upload_path + file_path;
 		log_warning<std::string>("Trying to create new file", file_path);
 		std::ofstream	new_file(file_path);
@@ -220,8 +219,9 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 
 client_status	Response::prepare_delete(const std::string &uri) {
 	std::string file_path = uri.substr(0, uri.find("?"));
-	if (access(file_path.c_str(), F_OK | W_OK) == -1) {
-		prepare_error_response(403);
+	file_path = _location->root + file_path.substr(file_path.find(_location->path) + _location->path.size());
+	if (access(file_path.c_str(), F_OK) == -1) {
+		prepare_error_response(404);
 		return SENDING_RESPONSE;
 	}
 	if (remove(file_path.c_str()) == -1) {

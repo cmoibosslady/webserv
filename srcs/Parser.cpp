@@ -66,6 +66,8 @@ client_status	Parser::parse_header(const std::string & raw_header) {
 		if (std::getline(ss, value)) {
 			if (value[0] == ' ')
 				value.erase(0, 1);
+			if (value[value.size() - 1] == '\r')
+				value.erase(value.size() - 1);
 			_headers[key] = value;
 		}
 		else {
