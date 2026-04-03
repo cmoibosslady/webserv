@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>webserv upload tester</title>
+	<link rel="stylesheet" href="/upload_tester.css">
+</head>
+<body>
+	<main class="container">
+		<h1>webserv: POST/DELETE tester</h1>
+		<p class="hint">
+			Config used: POST/DELETE on <code>http://127.0.0.1:8081/</code>, file listing from
+			<code>http://127.0.0.1:8080/upload/</code>.
+		</p>
+
+		<section class="card">
+			<h2>Upload a file (POST)</h2>
+			<form id="upload-form">
+				<label>
+					Choose file
+					<input type="file" id="file-input" required>
+				</label>
+
+				<label>
+					Target filename (optional)
+					<input type="text" id="target-name" placeholder="default: selected file name">
+				</label>
+
+				<button type="submit">Send POST</button>
+			</form>
+		</section>
+
+		<section class="card">
+			<h2>Delete a file (DELETE)</h2>
+			<form id="delete-form">
+				<label>
+					Filename to delete
+					<input type="text" id="delete-name" placeholder="example: test.txt" required>
+				</label>
+				<button type="submit" class="danger">Send DELETE</button>
+			</form>
+		</section>
+
+		<section class="card">
+			<div class="row">
+				<h2>Files in /upload</h2>
+				<button id="refresh-list" type="button">Refresh list</button>
+			</div>
+			<ul id="file-list"></ul>
+			<p id="list-note" class="hint"></p>
+		</section>
+
+		<section class="card">
+			<h2>Request log</h2>
+			<pre id="log"></pre>
+		</section>
+	</main>
+
+	<script src="/upload_tester.js"></script>
+</body>
+</html>
