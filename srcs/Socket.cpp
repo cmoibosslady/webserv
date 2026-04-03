@@ -83,10 +83,18 @@ socket_status Socket::set_socket_options(void) {
 	return SOCKET_SUCCESS;
 }
 
-int		Socket::socket_accept(struct sockaddr_in &client_address) const{
+int		Socket::socket_accept(struct sockaddr_in &client_address) const {
 	socklen_t			client_len = sizeof(client_address);
 	int					client_fd = accept(_sockfd, (struct sockaddr *)&client_address, &client_len);
 	return				client_fd;
+}
+
+bool	Socket::set_fd_option(int fd) const {
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		return false;
+	flags |= O_NONBLOCK;
+	return fcntl(fd, F_SETFL, flags) == 0;
 }
 
 int	Socket::inet_aton(const char *cp, struct in_addr *inp) {

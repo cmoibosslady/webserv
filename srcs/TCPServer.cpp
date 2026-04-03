@@ -70,7 +70,7 @@ int	TCPServer::init(void) {
 
 int	TCPServer::wait(void) {
 	std::vector<int> ready_fds;
-	exit_status st;
+	exit_status st = SUCCESS;
 	// log_info("Waiting for events...");
 	_poller.wait(-1, ready_fds);
 	if (_close_server) {
@@ -155,6 +155,10 @@ int		TCPServer::add_new_client(void) {
 	int client_fd = _socket_ptr->socket_accept(client_address);
 	if (client_fd == -1) {
 		log_error("Failed to accept new client connection");
+		return -1;
+	}
+	if (_socket_ptr->set_fd_option(client_fd) == false) {
+		close(client_fd);
 		return -1;
 	}
 	ClientConnection new_client(client_fd);
