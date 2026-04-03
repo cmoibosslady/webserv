@@ -195,7 +195,7 @@ client_status 	Response::prepare_post(const std::string &uri, const std::string 
 		}
 		file_path = _location->upload_path + file_path;
 		log_warning<std::string>("Trying to create new file", file_path);
-		std::ofstream	new_file(file_path);
+		std::ofstream	new_file(file_path.c_str());
 		if (new_file.fail()) {
 			prepare_error_response(500);
 			return SENDING_RESPONSE;
