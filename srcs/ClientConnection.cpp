@@ -20,6 +20,8 @@ ClientConnection::ClientConnection(const ClientConnection& other): Parser(other)
 }
 
 ClientConnection&	ClientConnection::operator=(const ClientConnection& other) {
+	Parser::operator=(other);
+	Response::operator=(other);
 	_fd = other._fd;
 	_buffer = other._buffer;
 	_status = other._status;
